@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+default-members = ["crates/cli"]
+
+[workspace.package]
+version = "0.1.0"
+description = "A helpful tool for AUCPL problem setters"
+edition = "2021"
+authors = ["Adelaide Competitive Programming Club"]
+homepage = "https://github.com/AdelaideCPC/aucpl-cli"
+license = "MIT"
+readme = "README.md"
