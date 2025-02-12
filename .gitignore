@@ -2,3 +2,8 @@
 .direnv
 result/
 target/
+
+# AUCPL
+problems/
+settings.toml
+!settings.toml.example
