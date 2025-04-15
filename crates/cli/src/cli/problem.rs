@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, create, sync_mappings};
+use crate::problem::{archive, check, create};
 
 pub fn cli() -> Command {
     Command::new("problem")
@@ -48,20 +48,6 @@ pub fn cli() -> Command {
                         .action(ArgAction::Set)
                         .required(true),
                 ),
-        )
-        .subcommand(
-            Command::new("sync")
-                .about("Package the test files and upload them to the remote server")
-                .arg_required_else_help(true)
-                .arg(
-                    Arg::new("name")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set)
-                        .required(true),
-                ),
-        )
-        .subcommand(
-            Command::new("sync-mappings").about("Generate or update the problem mappings file"),
         )
         .subcommand(
             Command::new("test")
@@ -110,18 +96,6 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem difficulty is required")?;
 
             create::create(&problems_dir, problem_name, *difficulty)?;
-        }
-        Some(("sync", cmd)) => {
-            let problem_name = cmd
-                .try_get_one::<String>("name")?
-                .context("Problem name is required")?;
-
-            // TODO
-            _ = problem_name;
-        }
-        Some(("sync-mappings", _)) => {
-            sync_mappings::sync_mappings(&problems_dir)?;
-            println!("Updated problem mappings file");
         }
         Some(("test", cmd)) => {
             let problem_name = cmd

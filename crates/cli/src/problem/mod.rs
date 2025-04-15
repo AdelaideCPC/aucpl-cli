@@ -1,7 +1,6 @@
 pub mod archive;
 pub mod check;
 pub mod create;
-pub mod sync;
 pub mod sync_mappings;
 pub mod test;
 

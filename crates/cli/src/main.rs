@@ -2,8 +2,11 @@ use anyhow::{bail, Result};
 use clap::Command;
 
 mod cli;
+mod comp;
 mod config;
 mod problem;
+mod publish;
+mod sync;
 
 pub const NAME: &str = "AUCPL CLI";
 pub const BIN_NAME: &str = env!("CARGO_BIN_NAME");
@@ -35,7 +38,9 @@ fn main() -> Result<()> {
     let matches = cli.get_matches();
 
     match matches.subcommand() {
+        Some(("comp", cmd)) => cli::comp::exec(cmd, &settings)?,
         Some(("problem", cmd)) => cli::problem::exec(cmd, &settings)?,
+        Some(("publish", cmd)) => cli::publish::exec(cmd, &settings)?,
         Some(("sync", cmd)) => cli::sync::exec(cmd, &settings)?,
         _ => unreachable!(),
     }
