@@ -1,3 +1,7 @@
+//! Validate the folder structure and files for a problem.
+//!
+//! TODO: Add linting and formatting checks
+
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -7,6 +11,7 @@ use regex::Regex;
 
 use crate::problem::sync_mappings::get_problem;
 use crate::problem::PROBLEM_NAME_REGEX_PATTERN;
+use crate::util::{get_files_in_directory, is_file_empty};
 
 static REQUIRED_FILES: &[&str] = &["problem.md", "solutions", "tests"];
 
@@ -27,27 +32,6 @@ fn valid_folder_structure(problem_dir: &PathBuf) -> Result<(&str, bool)> {
     }
 
     Ok(("", true))
-}
-
-fn get_files_in_directory<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
-    let entries = fs::read_dir(path)?;
-    let file_names = entries
-        .filter_map(|entry| {
-            let path = entry.ok()?.path();
-            if path.is_file() {
-                path.file_name()?.to_str().map(|s| s.to_owned())
-            } else {
-                None
-            }
-        })
-        .collect();
-
-    Ok(file_names)
-}
-
-fn is_file_empty<P: AsRef<Path>>(path: P) -> Result<bool> {
-    let metadata = fs::metadata(path)?;
-    Ok(metadata.len() == 0)
 }
 
 /// Check that no files or tests are missing, and that the problem name is valid

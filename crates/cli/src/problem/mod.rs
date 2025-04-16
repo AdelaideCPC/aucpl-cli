@@ -1,6 +1,9 @@
+//! CLI commands and helper functions related to problems.
+
 pub mod archive;
 pub mod check;
 pub mod create;
+pub mod solve;
 pub mod sync_mappings;
 pub mod test;
 

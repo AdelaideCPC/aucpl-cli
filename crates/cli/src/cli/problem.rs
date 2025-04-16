@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, create};
+use crate::problem::{archive, check, create, solve};
 
 pub fn cli() -> Command {
     Command::new("problem")
@@ -50,8 +50,19 @@ pub fn cli() -> Command {
                 ),
         )
         .subcommand(
+            Command::new("solve")
+                .about("Automatically generate test outputs for a problem, given pre-existing input files")
+                .arg_required_else_help(true)
+                .arg(
+                    Arg::new("name")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set)
+                        .required(true),
+                ),
+        )
+        .subcommand(
             Command::new("test")
-                .about("Test a problem using a local test server")
+                .about("Run tests on the given problem")
                 .arg_required_else_help(true)
                 .arg(
                     Arg::new("name")
@@ -96,6 +107,13 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem difficulty is required")?;
 
             create::create(&problems_dir, problem_name, *difficulty)?;
+        }
+        Some(("solve", cmd)) => {
+            let problem_name = cmd
+                .try_get_one::<String>("name")?
+                .context("Problem name is required")?;
+
+            solve::solve(settings, &problems_dir, problem_name)?;
         }
         Some(("test", cmd)) => {
             let problem_name = cmd

@@ -7,6 +7,7 @@ mod config;
 mod problem;
 mod publish;
 mod sync;
+mod util;
 
 pub const NAME: &str = "AUCPL CLI";
 pub const BIN_NAME: &str = env!("CARGO_BIN_NAME");

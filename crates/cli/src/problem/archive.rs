@@ -1,3 +1,5 @@
+//! Archive a problem (e.g. problems that have been used in a competition).
+
 use std::fs;
 use std::path::PathBuf;
 

@@ -1,1 +1,17 @@
 problems_dir = "./problems"
+
+[problem]
+# Command to run when compiling a problem to generate test outputs or run tests.
+# - `@in_file` is the verbatim argument for the name of the solution file to compile.
+#   This is determined automatically when the command is run.
+# - `@bin_file` is the verbatim argument for the name of the compiled solution binary.
+solution_compile_command = ["g++", "-Wall", "-std=c++20", "@in_file", "-o", "@bin_file"]
+
+# Command to run when running a solution file that is a compiled executable or a script.
+# - `@bin_file` is the placeholder string for the name of the compiled solution binary to run.
+# - `@script_file` is the placeholder string for the name of the script to run.
+solution_run_command = ["@bin_file"]
+
+# File extension of the solution file, include the dot and then the extension.
+# e.g. .cpp, .py
+solution_file_ext = ".cpp"
