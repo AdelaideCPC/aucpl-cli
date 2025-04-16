@@ -87,7 +87,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem name is required")?;
 
             archive::archive(&problems_dir, problem_name)?;
-            println!("Archived problem '{problem_name}'");
+            eprintln!("Archived problem '{problem_name}'");
         }
         Some(("check", cmd)) => {
             let problem_name = cmd

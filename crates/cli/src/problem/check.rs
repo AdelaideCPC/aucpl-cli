@@ -36,7 +36,7 @@ fn valid_folder_structure(problem_dir: &PathBuf) -> Result<(&str, bool)> {
 
 /// Check that no files or tests are missing, and that the problem name is valid
 pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
-    println!("Begin check...");
+    eprintln!("Begin check...");
 
     let problem_path = get_problem(&problems_dir, problem_name)?;
     let path = PathBuf::new().join(problem_path);
@@ -54,7 +54,7 @@ pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
     if !exists {
         bail!("The folder structure is not valid! Missing file {file}");
     }
-    println!("Folder structure for '{}' is valid", problem_name);
+    eprintln!("Folder structure for '{}' is valid", problem_name);
 
     // Check that test files are valid, i.e.:
     // - A .in file must have a corresponding .out file
@@ -73,7 +73,7 @@ pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
 
         match is_file_empty(test_path) {
             Ok(false) => {}
-            Ok(true) => println!("Warning: `{}` is an empty file", &file),
+            Ok(true) => eprintln!("Warning: `{}` is an empty file", &file),
             Err(err) => bail!("Failed to check if `{}` was empty: {err}", &file),
         }
 
@@ -103,7 +103,7 @@ pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
 
     for (name, data) in &tests_data {
         if data.input_exists && data.output_exists {
-            println!("Test case '{name}' is valid");
+            eprintln!("Test case '{name}' is valid");
         } else {
             let in_exists = if data.input_exists {
                 format!("`{name}.in` exists")
@@ -121,10 +121,10 @@ pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
     }
 
     if tests_data.iter().len() < 2 {
-        println!("Warning: You have fewer than two test cases! Maybe add a few more?");
+        eprintln!("Warning: You have fewer than two test cases! Maybe add a few more?");
     }
 
-    println!("Check completed. Found {invalid_tests} invalid tests");
+    eprintln!("Check completed. Found {invalid_tests} invalid tests");
 
     Ok(())
 }

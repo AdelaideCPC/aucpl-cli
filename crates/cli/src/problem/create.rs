@@ -68,7 +68,7 @@ Problem description.
 
     sync_mappings(problems_dir)?;
 
-    println!("Created problem '{problem_name}' with difficulty {difficulty}");
+    eprintln!("Created problem '{problem_name}' with difficulty {difficulty}");
 
     Ok(())
 }

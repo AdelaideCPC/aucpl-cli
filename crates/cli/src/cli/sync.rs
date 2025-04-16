@@ -20,7 +20,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
     }
 
     sync_mappings::sync_mappings(&problems_dir)?;
-    println!("Updated problem mappings file");
+    eprintln!("Updated problem mappings file");
 
     Ok(())
 }
