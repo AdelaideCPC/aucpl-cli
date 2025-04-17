@@ -3,7 +3,7 @@
 A helpful command-line interface for AUCPL problem setters.
 
 > [!WARNING]
-> This tool is currently in active development, and is not ready for general use.
+> This tool is currently in active development, and breaking changes can occur at any point.
 
 ## Getting started
 
@@ -19,7 +19,7 @@ Problems are stored in a `problems` folder. This can be changed in the `settings
 
 Within each difficulty folder, there are the individual problems. Each of these folders will contain a `problem.md` which is the problem statement. There will be a `tests` folder for test cases and a `solutions` folder for reference solutions.
 
-Lastly, there is a `problem-mappings.json` file that maps the problem names to its stored location. This is so that in the CLI, you do not have to specify things like the rating or whether it's a new or archived problem. You can also use `aucpl problem sync-mappings` to generate or update the mappings.
+Lastly, there is a `problem-mappings.json` file that maps the problem names to its stored location. This is so that in the CLI, you do not have to specify things like the rating or whether it's a new or archived problem. You can also use `aucpl sync` to generate or update the mappings.
 
 The general structure of `problems` looks like this:
 
