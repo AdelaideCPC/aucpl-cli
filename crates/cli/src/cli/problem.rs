@@ -53,12 +53,28 @@ pub fn cli() -> Command {
             Command::new("solve")
                 .about("Automatically generate test outputs for a problem, given pre-existing input files")
                 .arg_required_else_help(true)
-                .arg(
+                .args([
                     Arg::new("name")
                         .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set)
                         .required(true),
-                ),
+                    // Arg::new("compile_command")
+                    //     .long("compile-command")
+                    //     .help("The compile command to run instead of the default in the settings file")
+                    //     .value_name("command")
+                    //     .value_delimiter(',')
+                    //     .action(ArgAction::Set),
+                    // Arg::new("run_command")
+                    //     .long("run-command")
+                    //     .help("The run command to run instead of the default in the settings file")
+                    //     .value_name("command")
+                    //     .value_delimiter(',')
+                    //     .action(ArgAction::Set),
+                    Arg::new("file")
+                        .long("file")
+                        .help("Name of the solution file")
+                        .action(ArgAction::Set),
+                ]),
         )
         .subcommand(
             Command::new("test")
@@ -113,7 +129,17 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .try_get_one::<String>("name")?
                 .context("Problem name is required")?;
 
-            solve::solve(settings, &problems_dir, problem_name)?;
+            let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
+
+            // let compile_command = cmd
+            //     .try_get_many::<String>("compile_command")?
+            //     .map(|c| c.map(|s| s.to_string()).collect::<Vec<String>>());
+
+            // let run_command = cmd
+            //     .try_get_many::<String>("run_command")?
+            //     .map(|c| c.map(|s| s.to_string()).collect::<Vec<String>>());
+
+            solve::solve(settings, &problems_dir, problem_name, solution_file)?;
         }
         Some(("test", cmd)) => {
             let problem_name = cmd

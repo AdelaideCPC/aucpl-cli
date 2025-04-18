@@ -9,14 +9,28 @@ use super::sync_mappings::get_problem;
 use crate::{config::Settings, util::get_files_in_directory};
 
 /// Automatically generate test outputs for a problem, given pre-existing input files.
-pub fn solve(settings: &Settings, problems_dir: &PathBuf, problem_name: &str) -> Result<()> {
+pub fn solve(
+    settings: &Settings,
+    problems_dir: &PathBuf,
+    problem_name: &str,
+    solution_file_name: Option<&str>,
+) -> Result<()> {
     let problem = PathBuf::new().join(get_problem(problems_dir, problem_name)?);
 
     let solution_file_ext = settings.problem.solution_file_ext.clone();
-    let solution_file = problem.join(format!("solutions/solution{}", solution_file_ext));
+    let mut solution_file = problem.join(format!("solutions/solution{}", solution_file_ext));
+    if solution_file_name.is_some() {
+        solution_file = problem.join(format!(
+            "solutions/{}",
+            solution_file_name.context("Failed to get solution file name")?
+        ));
+    }
+
     if !fs::exists(&solution_file).expect("Failed to check if path exists") {
         bail!("Solution file does not exist: {:?}", solution_file);
     }
+
+    eprintln!("Using solution file at: {}", solution_file.display());
 
     let bin_file = problem.join("solutions/solution.out");
     let script_file = problem.join(format!("solutions/solution{}", solution_file_ext));
@@ -86,7 +100,7 @@ pub fn solve(settings: &Settings, problems_dir: &PathBuf, problem_name: &str) ->
         final_cmd = final_cmd.stdin(&*input_contents).stdout(Redirection::Pipe);
         let out_str = final_cmd.capture()?.stdout_str();
         output_file.write_all(out_str.as_bytes())?;
-        eprintln!("Generated output for test file: {}", test_file);
+        eprintln!("  - generated output for test file: {}", test_file);
     }
     eprintln!("Finished generating outputs for all test cases");
 
