@@ -24,8 +24,8 @@ pub struct Settings {
 
 impl Settings {
     pub fn new(config_file: Option<&str>) -> Result<Self, ConfigError> {
-        let project_root = get_project_root()
-            .map_err(|err| ConfigError::Message(format!("Failed to get settings: {err}")))?;
+        let project_root =
+            get_project_root().map_err(|err| ConfigError::Message(format!("{err}")))?;
 
         let settings_path = match config_file {
             Some(name) => project_root.join(name),

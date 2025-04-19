@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, create, solve};
+use crate::problem::{archive, check, create, solve, test};
 use crate::util::get_project_root;
 
 pub fn cli() -> Command {
@@ -81,12 +81,16 @@ pub fn cli() -> Command {
             Command::new("test")
                 .about("Run tests on the given problem")
                 .arg_required_else_help(true)
-                .arg(
+                .args([
                     Arg::new("name")
                         .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set)
                         .required(true),
-                ),
+                    Arg::new("file")
+                        .long("file")
+                        .help("Name of the solution file")
+                        .action(ArgAction::Set),
+                ]),
         )
         .subcommand_required(true)
 }
@@ -147,8 +151,9 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .try_get_one::<String>("name")?
                 .context("Problem name is required")?;
 
-            // TODO
-            _ = problem_name;
+            let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
+
+            test::test(settings, &problems_dir, problem_name, solution_file)?;
         }
         _ => {}
     }
