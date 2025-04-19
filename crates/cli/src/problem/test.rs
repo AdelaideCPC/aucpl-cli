@@ -2,6 +2,7 @@ use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use anyhow::{bail, Context, Result};
 use subprocess::{Exec, Redirection};
@@ -70,6 +71,8 @@ pub fn test(
 
     let mut tests_passed = 0;
     let mut total_tests = 0;
+    let mut total_time: Duration = Duration::new(0, 0);
+
     for test_file in test_files {
         // Check if the file is a .in file
         if !test_file.ends_with(".in") {
@@ -104,23 +107,27 @@ pub fn test(
             }
         }
 
+        let start_time = Instant::now();
         final_cmd = final_cmd.stdin(&*input_contents).stdout(Redirection::Pipe);
         let out_str = final_cmd.capture()?.stdout_str();
+        let elapsed_time = start_time.elapsed();
 
         // Compare the output with the expected output
         let expected: &mut Vec<u8> = &mut Vec::new();
         output_file.read_to_end(expected)?;
 
         if expected != out_str.as_bytes() {
-            eprintln!("  ! Test case failed: {}", test_file);
+            eprintln!("  ! Test case failed: {test_file}, time taken: {elapsed_time:?}");
         } else {
-            eprintln!("  + Test case passed: {}", test_file);
+            eprintln!("  + Test case passed: {test_file}, time taken: {elapsed_time:?}");
             tests_passed += 1;
         }
+
         total_tests += 1;
+        total_time += elapsed_time;
     }
 
-    eprintln!("{} out of {} test cases passed", tests_passed, total_tests);
+    eprintln!("{tests_passed} out of {total_tests} test cases passed, time taken: {total_time:?}");
 
     // Delete the compiled run file, if it exists
     if bin_file.exists() {
