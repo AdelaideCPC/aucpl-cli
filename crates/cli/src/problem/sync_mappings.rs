@@ -7,12 +7,15 @@ use serde_json::{json, to_writer, to_writer_pretty};
 use walkdir::WalkDir;
 
 use crate::problem::PROBLEM_MAPPINGS_FILE;
+use crate::util::get_project_root;
 
 /// Sync problem mappings
 ///
 /// The problem mappings file, `problem-mappings.json` maps the problem name
 /// to the relative file location of the problem.
 pub fn sync_mappings(problems_dir: &PathBuf) -> Result<()> {
+    let project_root = get_project_root()?;
+    let problems_dir = fs::canonicalize(problems_dir)?;
     let path = &problems_dir.join(PROBLEM_MAPPINGS_FILE);
     if !fs::exists(path)? {
         let file = File::create(path)?;
@@ -36,9 +39,11 @@ pub fn sync_mappings(problems_dir: &PathBuf) -> Result<()> {
     {
         let relative_path = entry
             .path()
+            .strip_prefix(&project_root)?
             .to_str()
             .context("Could not convert Path to str")?
             .to_string();
+
         let folder_name = entry
             .path()
             .file_name()
