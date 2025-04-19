@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::PathBuf;
@@ -87,9 +88,9 @@ pub fn test(
         let mut cmd_iter_clone = cmd_iter.clone();
         let cmd = cmd_iter_clone.next().context("Failed to get command")?;
         let mut final_cmd = Exec::cmd(match cmd.as_str() {
-            "@bin_file" => bin_file.clone(),
-            "@script_file" => script_file.clone(),
-            _ => project_root.join(cmd),
+            "@bin_file" => bin_file.as_os_str(),
+            "@script_file" => script_file.as_os_str(),
+            _ => OsStr::new(cmd),
         });
 
         for c in cmd_iter_clone {
