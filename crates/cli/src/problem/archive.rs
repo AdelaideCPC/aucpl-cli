@@ -5,6 +5,8 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 
+use crate::util::get_project_root;
+
 use super::sync_mappings::{get_problem, sync_mappings};
 
 /// Archive problems by moving them from the `new` to the `archive`
@@ -20,12 +22,13 @@ pub fn archive(problems_dir: &PathBuf, problem_name: &str) -> Result<()> {
     };
 
     let updated_problem_path = problem_path.replace("new", "archive");
+    let project_root = get_project_root()?;
 
     // Create the directory and its parent folders in case it doesn't exist
     fs::create_dir_all(&updated_problem_path)?;
     fs::rename(
-        PathBuf::new().join(problem_path),
-        PathBuf::new().join(updated_problem_path),
+        project_root.join(problem_path),
+        project_root.join(updated_problem_path),
     )?;
     sync_mappings(problems_dir)?;
 

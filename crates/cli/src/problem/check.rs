@@ -4,14 +4,14 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 use regex::Regex;
 
 use crate::problem::sync_mappings::get_problem;
 use crate::problem::PROBLEM_NAME_REGEX_PATTERN;
-use crate::util::{get_files_in_directory, is_file_empty};
+use crate::util::{get_files_in_directory, get_project_root, is_file_empty};
 
 static REQUIRED_FILES: &[&str] = &["problem.md", "solutions", "tests"];
 
@@ -26,7 +26,11 @@ struct TestData {
 /// NOTE: This only checks the top-level so far.
 fn valid_folder_structure(problem_dir: &PathBuf) -> Result<(&str, bool)> {
     for file in REQUIRED_FILES {
-        if !Path::new(&problem_dir).join(file).try_exists()? {
+        if !get_project_root()?
+            .join(problem_dir)
+            .join(file)
+            .try_exists()?
+        {
             return Ok((file, false));
         }
     }
@@ -39,7 +43,7 @@ pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
     eprintln!("Begin check...");
 
     let problem_path = get_problem(&problems_dir, problem_name)?;
-    let path = PathBuf::new().join(problem_path);
+    let path = get_project_root()?.join(problem_path);
     if !fs::exists(&path)? {
         bail!("The given path {path:?} doesn't exist");
     }

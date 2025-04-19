@@ -6,6 +6,7 @@ use anyhow::{bail, Context, Result};
 use subprocess::{Exec, Redirection};
 
 use super::sync_mappings::get_problem;
+use crate::util::get_project_root;
 use crate::{config::Settings, util::get_files_in_directory};
 
 /// Automatically generate test outputs for a problem, given pre-existing input files.
@@ -15,7 +16,8 @@ pub fn solve(
     problem_name: &str,
     solution_file_name: Option<&str>,
 ) -> Result<()> {
-    let problem = PathBuf::new().join(get_problem(problems_dir, problem_name)?);
+    let project_root = get_project_root()?;
+    let problem = project_root.join(get_problem(problems_dir, problem_name)?);
 
     let solution_file_ext = settings.problem.solution_file_ext.clone();
     let mut solution_file = problem.join(format!("solutions/solution{}", solution_file_ext));
@@ -25,6 +27,7 @@ pub fn solve(
             solution_file_name.context("Failed to get solution file name")?
         ));
     }
+    solution_file = fs::canonicalize(solution_file)?;
 
     if !fs::exists(&solution_file).expect("Failed to check if path exists") {
         bail!("Solution file does not exist: {:?}", solution_file);
@@ -85,7 +88,7 @@ pub fn solve(
         let mut final_cmd = Exec::cmd(match cmd.as_str() {
             "@bin_file" => bin_file.clone(),
             "@script_file" => script_file.clone(),
-            _ => PathBuf::new().join(cmd),
+            _ => project_root.join(cmd),
         });
 
         for c in cmd_iter_clone {

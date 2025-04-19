@@ -15,11 +15,6 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const ABOUT: &str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() -> Result<()> {
-    let settings = match config::Settings::new(None) {
-        Ok(s) => s,
-        Err(error) => bail!("Failed to parse settings file: {error:?}"),
-    };
-
     let about_text = format!("{} {}\n{}", NAME, VERSION, ABOUT);
     let after_help_text = format!(
         "See '{} help <command>' for more information on a command",
@@ -37,6 +32,11 @@ fn main() -> Result<()> {
         .subcommand_required(true);
 
     let matches = cli.get_matches();
+
+    let settings = match config::Settings::new(None) {
+        Ok(s) => s,
+        Err(error) => bail!("Failed to parse settings file: {error:?}"),
+    };
 
     match matches.subcommand() {
         Some(("comp", cmd)) => cli::comp::exec(cmd, &settings)?,

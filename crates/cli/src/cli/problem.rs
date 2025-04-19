@@ -1,10 +1,11 @@
-use std::{fs, path::PathBuf};
+use std::fs;
 
 use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
 use crate::problem::{archive, check, create, solve};
+use crate::util::get_project_root;
 
 pub fn cli() -> Command {
     Command::new("problem")
@@ -91,7 +92,7 @@ pub fn cli() -> Command {
 }
 
 pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
-    let problems_dir = PathBuf::new().join(&settings.problems_dir);
+    let problems_dir = get_project_root()?.join(&settings.problems_dir);
     if !fs::exists(&problems_dir).expect("Failed to check if path exists") {
         fs::create_dir(&problems_dir).expect("Failed to create directory");
     }
