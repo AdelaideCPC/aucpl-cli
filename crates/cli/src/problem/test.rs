@@ -117,9 +117,15 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         if expected != out_str.as_bytes() {
-            eprintln!("  ! Test case failed: {test_file}, time taken: {elapsed_time:?}");
+            eprintln!(
+                "  ! Test case failed: {test_file}, time taken: {:.5}s",
+                elapsed_time.as_secs_f64()
+            );
         } else {
-            eprintln!("  + Test case passed: {test_file}, time taken: {elapsed_time:?}");
+            eprintln!(
+                "  + Test case passed: {test_file}, time taken: {:.5}s",
+                elapsed_time.as_secs_f64()
+            );
             tests_passed += 1;
         }
 
@@ -127,7 +133,10 @@ pub fn test(
         total_time += elapsed_time;
     }
 
-    eprintln!("{tests_passed} out of {total_tests} test cases passed, time taken: {total_time:?}");
+    eprintln!(
+        "{tests_passed} out of {total_tests} test cases passed, time taken: {:.5}s",
+        total_time.as_secs_f64()
+    );
 
     // Delete the compiled run file, if it exists
     if bin_file.exists() {
