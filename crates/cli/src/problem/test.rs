@@ -68,6 +68,8 @@ pub fn test(
 
     eprintln!("Running the solution file for each test case...");
 
+    let mut tests_passed = 0;
+    let mut total_tests = 0;
     for test_file in test_files {
         // Check if the file is a .in file
         if !test_file.ends_with(".in") {
@@ -110,12 +112,15 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         if expected != out_str.as_bytes() {
-            eprintln!("  - Test case failed: {}", test_file);
+            eprintln!("  ! Test case failed: {}", test_file);
         } else {
             eprintln!("  + Test case passed: {}", test_file);
+            tests_passed += 1;
         }
+        total_tests += 1;
     }
-    eprintln!("Finished running test cases");
+
+    eprintln!("{} out of {} test cases passed", tests_passed, total_tests);
 
     // Delete the compiled run file, if it exists
     if bin_file.exists() {
