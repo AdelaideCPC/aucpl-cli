@@ -2,6 +2,7 @@ problems_dir = "./problems"
 
 [problem]
 # The default language of the solutions. Should be the file extension for that language.
+# You can switch the language to use by passing the `--lang` flag.
 #
 # e.g. cpp, py, java, etc.
 default_lang = "cpp"
@@ -10,7 +11,9 @@ default_lang = "cpp"
 # <lang> corresponds to the file extension for that language.
 
 # problem.solution.<lang>.compile_command
+#
 # Command to run when compiling a problem to generate test outputs or run tests.
+#
 # - `@in_file` is the verbatim argument for the name of the solution file to compile.
 #   This is determined automatically when the command is run.
 # - `@bin_file` is the verbatim argument for the name of the compiled solution binary.
@@ -18,7 +21,9 @@ default_lang = "cpp"
 # e.g. compile_command = ["g++", "-Wall", "-std=c++20", "-O2", "@in_file", "-o", "@bin_file"]
 
 # problem.solution.<lang>.run_command
+#
 # Command to run when running a solution file that is a compiled executable or a script.
+#
 # - `@bin_file` is the placeholder string for the name of the compiled solution binary to run.
 # - `@script_file` is the placeholder string for the name of the script to run.
 #
