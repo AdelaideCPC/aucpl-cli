@@ -75,6 +75,10 @@ pub fn cli() -> Command {
                         .long("file")
                         .help("Name of the solution file")
                         .action(ArgAction::Set),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
                 ]),
         )
         .subcommand(
@@ -89,6 +93,10 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the solution file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                 ]),
         )
@@ -135,6 +143,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem name is required")?;
 
             let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
+            let solution_lang = cmd.try_get_one::<String>("lang")?;
 
             // let compile_command = cmd
             //     .try_get_many::<String>("compile_command")?
@@ -144,7 +153,13 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             //     .try_get_many::<String>("run_command")?
             //     .map(|c| c.map(|s| s.to_string()).collect::<Vec<String>>());
 
-            solve::solve(settings, &problems_dir, problem_name, solution_file)?;
+            solve::solve(
+                settings,
+                &problems_dir,
+                problem_name,
+                solution_file,
+                solution_lang,
+            )?;
         }
         Some(("test", cmd)) => {
             let problem_name = cmd
@@ -152,8 +167,15 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem name is required")?;
 
             let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
+            let solution_lang = cmd.try_get_one::<String>("lang")?;
 
-            test::test(settings, &problems_dir, problem_name, solution_file)?;
+            test::test(
+                settings,
+                &problems_dir,
+                problem_name,
+                solution_file,
+                solution_lang,
+            )?;
         }
         _ => {}
     }

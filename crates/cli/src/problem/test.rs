@@ -18,12 +18,13 @@ pub fn test(
     problems_dir: &PathBuf,
     problem_name: &str,
     solution_file_name: Option<&str>,
+    solution_lang: Option<&String>,
 ) -> Result<()> {
     let project_root = get_project_root()?;
     let problem = project_root.join(get_problem(problems_dir, problem_name)?);
 
-    let solution_file_ext = settings.problem.solution_file_ext.clone();
-    let mut solution_file = problem.join(format!("solutions/solution{}", solution_file_ext));
+    let solution_lang = solution_lang.unwrap_or(&settings.problem.default_lang);
+    let mut solution_file = problem.join(format!("solutions/solution.{}", solution_lang));
     if solution_file_name.is_some() {
         solution_file = problem.join(format!(
             "solutions/{}",
@@ -39,11 +40,26 @@ pub fn test(
     eprintln!("Using solution file at: {}", solution_file.display());
 
     let bin_file = problem.join("solutions/solution.out");
-    let script_file = problem.join(format!("solutions/solution{}", solution_file_ext));
+    let script_file = problem.join(format!("solutions/solution.{}", solution_lang));
 
-    // Compile the file (if set)
-    let compile_command = settings.problem.solution_compile_command.clone();
-    if !compile_command.is_empty() {
+    let lang_settings = settings
+        .problem
+        .solution
+        .get(solution_lang)
+        .context(format!(
+            "Could not get settings for language `{solution_lang}`"
+        ))?;
+
+    let compile_command = lang_settings.compile_command.clone();
+
+    // Check if the solution file is a script (if it needs compilation or not)
+    let needs_compilation = compile_command.is_some();
+    let compile_command = compile_command.unwrap_or_default();
+    if needs_compilation && compile_command.is_empty() {
+        bail!("compile_command specified in the settings, but array is empty");
+    }
+
+    if needs_compilation {
         let mut cmd_iter = compile_command.iter();
         let mut final_cmd = Exec::cmd(cmd_iter.next().context("Failed to get command")?);
         for c in cmd_iter {
@@ -60,7 +76,7 @@ pub fn test(
         eprintln!("Done");
     }
 
-    let run_command = settings.problem.solution_run_command.clone();
+    let run_command = lang_settings.run_command.clone().unwrap_or_default();
     if run_command.is_empty() {
         bail!("No run command specified in the settings. It must be specified!");
     }

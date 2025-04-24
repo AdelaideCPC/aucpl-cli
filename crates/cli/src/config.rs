@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
 
@@ -5,21 +7,26 @@ use crate::util::get_project_root;
 
 pub const SETTINGS_FILE: &str = "settings.toml";
 
-/// Settings specific to problem configuration.
-#[allow(unused)]
-#[derive(Debug, Deserialize)]
-pub struct Problem {
-    pub solution_compile_command: Vec<String>,
-    pub solution_run_command: Vec<String>,
-    pub solution_file_ext: String,
-}
-
 /// Configuration for the CLI, loaded via a settings file.
 #[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     pub problems_dir: String,
     pub problem: Problem,
+}
+/// Settings specific to problem configuration.
+#[allow(unused)]
+#[derive(Debug, Deserialize)]
+pub struct Problem {
+    pub default_lang: String,
+    pub solution: HashMap<String, LangSolution>,
+}
+
+#[allow(unused)]
+#[derive(Debug, Deserialize)]
+pub struct LangSolution {
+    pub compile_command: Option<Vec<String>>,
+    pub run_command: Option<Vec<String>>,
 }
 
 impl Settings {
