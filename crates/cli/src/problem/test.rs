@@ -103,9 +103,6 @@ pub fn test(
                 .context("Failed to strip suffix of test file")?
         ));
 
-        let input_contents = fs::read_to_string(input_file_path)?;
-        let mut output_file = File::open(output_file_path)?;
-
         let mut cmd_iter_clone = cmd_iter.clone();
         let cmd = cmd_iter_clone.next().context("Failed to get command")?;
         let mut final_cmd = Exec::cmd(match cmd.as_str() {
@@ -123,8 +120,11 @@ pub fn test(
             }
         }
 
+        let input_file = File::open(input_file_path)?;
+        let mut output_file = File::open(output_file_path)?;
+
         let start_time = Instant::now();
-        final_cmd = final_cmd.stdin(&*input_contents).stdout(Redirection::Pipe);
+        final_cmd = final_cmd.stdin(input_file).stdout(Redirection::Pipe);
         let out_str = final_cmd.capture()?.stdout_str();
         let elapsed_time = start_time.elapsed();
 

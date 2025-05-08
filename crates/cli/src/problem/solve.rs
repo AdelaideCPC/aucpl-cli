@@ -1,10 +1,9 @@
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::io::Write;
 use std::path::PathBuf;
 
 use anyhow::{bail, Context, Result};
-use subprocess::{Exec, Redirection};
+use subprocess::Exec;
 
 use super::sync_mappings::get_problem;
 use crate::util::get_project_root;
@@ -89,6 +88,8 @@ pub fn solve(
             continue;
         }
 
+        println!("Test file: {}", test_file);
+
         let input_file_path = problem.join(format!("tests/{}", test_file));
         let output_file_path = problem.join(format!(
             "tests/{}.out",
@@ -96,9 +97,6 @@ pub fn solve(
                 .strip_suffix(".in")
                 .context("Failed to strip suffix of test file")?
         ));
-
-        let input_contents = fs::read_to_string(input_file_path)?;
-        let mut output_file = File::create(&output_file_path)?;
 
         let mut cmd_iter_clone = cmd_iter.clone();
         let cmd = cmd_iter_clone.next().context("Failed to get command")?;
@@ -117,9 +115,11 @@ pub fn solve(
             }
         }
 
-        final_cmd = final_cmd.stdin(&*input_contents).stdout(Redirection::Pipe);
-        let out_str = final_cmd.capture()?.stdout_str();
-        output_file.write_all(out_str.as_bytes())?;
+        let input_file = File::open(input_file_path)?;
+        let output_file = File::create(output_file_path)?;
+
+        final_cmd = final_cmd.stdin(input_file).stdout(output_file);
+        final_cmd.capture()?;
         eprintln!("  - generated output for test file: {}", test_file);
     }
     eprintln!("Finished generating outputs for all test cases");
