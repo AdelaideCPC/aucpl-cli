@@ -7,7 +7,7 @@ use subprocess::Exec;
 
 use super::sync_mappings::get_problem;
 use crate::util::get_project_root;
-use crate::{config::Settings, util::get_files_in_directory};
+use crate::{config::Settings, util::get_input_files_in_directory};
 
 /// Automatically generate test outputs for a problem, given pre-existing input files.
 pub fn solve(
@@ -78,18 +78,11 @@ pub fn solve(
         bail!("No run command specified in the settings. It must be specified!");
     }
     let cmd_iter = run_command.iter();
-    let test_files = get_files_in_directory(problem.join("tests"))?;
+    let test_files = get_input_files_in_directory(problem.join("tests"))?;
 
     eprintln!("Running the solution file for each test case...");
     // Run the file for every test input and generate the corresponding output
     for test_file in test_files {
-        // Check if the file is a .in file
-        if !test_file.ends_with(".in") {
-            continue;
-        }
-
-        println!("Test file: {}", test_file);
-
         let input_file_path = problem.join(format!("tests/{}", test_file));
         let output_file_path = problem.join(format!(
             "tests/{}.out",

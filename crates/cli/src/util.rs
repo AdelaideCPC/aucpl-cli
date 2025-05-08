@@ -34,6 +34,14 @@ pub fn get_files_in_directory<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
     Ok(file_names)
 }
 
+pub fn get_input_files_in_directory<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
+    let files = get_files_in_directory(path)?
+        .into_iter()
+        .filter(|name| name.ends_with(".in"))
+        .collect();
+    Ok(files)
+}
+
 pub fn is_file_empty<P: AsRef<Path>>(path: P) -> Result<bool> {
     let metadata = fs::metadata(path)?;
     Ok(metadata.len() == 0)
