@@ -1,9 +1,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 
 use crate::config::SETTINGS_FILE;
+use crate::problem::sync_mappings::problem_exists;
 
 /// Figure out the root directory of the AUCPL problemset project.
 pub fn get_project_root() -> Result<PathBuf> {
@@ -15,6 +16,26 @@ pub fn get_project_root() -> Result<PathBuf> {
     }
 
     Ok(path)
+}
+
+/// Get the name of the problem from the current working directory if the
+/// directory is a valid problem folder.
+pub fn get_problem_from_cwd(problems_dir: &Path) -> Result<String> {
+    let path = std::env::current_dir()?;
+    let problem_name = path
+        .file_name()
+        .context("Failed to get problem name")?
+        .to_str()
+        .context("Failed to convert problem name to string")?
+        .to_owned();
+
+    // Validate that the problem exists
+    let exists = problem_exists(problems_dir, &problem_name)?;
+    if !exists {
+        bail!("Problem '{problem_name}' does not exist. Make sure you are in a valid problem directory and that the problem mappings file is up to date");
+    }
+
+    Ok(problem_name)
 }
 
 /// Get a list of files in a directory that are not directories.

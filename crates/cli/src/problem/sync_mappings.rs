@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use serde_json::{json, to_writer, to_writer_pretty};
@@ -88,4 +88,18 @@ pub fn get_problem(problems_dir: &PathBuf, problem: &str) -> Result<String> {
             Ok(val.clone())
         }
     }
+}
+
+/// Check if a problem exists in the problem mappings file.
+pub fn problem_exists(problems_dir: &Path, problem: &str) -> Result<bool> {
+    let mappings_file_path = &problems_dir.join(PROBLEM_MAPPINGS_FILE);
+    if !fs::exists(mappings_file_path)? {
+        let file = File::create(mappings_file_path)?;
+        to_writer(&file, &json!({}))?;
+    }
+
+    let mappings_file = File::open(mappings_file_path)?;
+    let mappings: HashMap<String, String> = serde_json::from_reader(&mappings_file)?;
+
+    Ok(mappings.contains_key(problem))
 }

@@ -5,7 +5,7 @@ use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
 use crate::problem::{archive, check, create, solve, test};
-use crate::util::get_project_root;
+use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
     Command::new("problem")
@@ -53,24 +53,7 @@ pub fn cli() -> Command {
         .subcommand(
             Command::new("solve")
                 .about("Automatically generate test outputs for a problem, given pre-existing input files")
-                .arg_required_else_help(true)
                 .args([
-                    Arg::new("name")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set)
-                        .required(true),
-                    // Arg::new("compile_command")
-                    //     .long("compile-command")
-                    //     .help("The compile command to run instead of the default in the settings file")
-                    //     .value_name("command")
-                    //     .value_delimiter(',')
-                    //     .action(ArgAction::Set),
-                    // Arg::new("run_command")
-                    //     .long("run-command")
-                    //     .help("The run command to run instead of the default in the settings file")
-                    //     .value_name("command")
-                    //     .value_delimiter(',')
-                    //     .action(ArgAction::Set),
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
@@ -78,18 +61,18 @@ pub fn cli() -> Command {
                     Arg::new("lang")
                         .long("lang")
                         .help("Language of the solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set),
                 ]),
         )
         .subcommand(
             Command::new("test")
-                .about("Run tests on the given problem")
-                .arg_required_else_help(true)
+                .about("Run tests on a given problem")
                 .args([
-                    Arg::new("name")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set)
-                        .required(true),
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
@@ -98,6 +81,11 @@ pub fn cli() -> Command {
                         .long("lang")
                         .help("Language of the solution file (e.g. cpp, py)")
                         .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set)
                 ]),
         )
         .subcommand_required(true)
@@ -138,20 +126,13 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             create::create(&problems_dir, problem_name, *difficulty)?;
         }
         Some(("solve", cmd)) => {
-            let problem_name = cmd
-                .try_get_one::<String>("name")?
-                .context("Problem name is required")?;
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
 
             let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
             let solution_lang = cmd.try_get_one::<String>("lang")?;
-
-            // let compile_command = cmd
-            //     .try_get_many::<String>("compile_command")?
-            //     .map(|c| c.map(|s| s.to_string()).collect::<Vec<String>>());
-
-            // let run_command = cmd
-            //     .try_get_many::<String>("run_command")?
-            //     .map(|c| c.map(|s| s.to_string()).collect::<Vec<String>>());
 
             solve::solve(
                 settings,
@@ -162,9 +143,10 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             )?;
         }
         Some(("test", cmd)) => {
-            let problem_name = cmd
-                .try_get_one::<String>("name")?
-                .context("Problem name is required")?;
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
 
             let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
             let solution_lang = cmd.try_get_one::<String>("lang")?;
