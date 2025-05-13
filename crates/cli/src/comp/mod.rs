@@ -20,6 +20,6 @@ type Competitions = BTreeMap<String, CompetitionData>;
 
 #[derive(Clone, Deserialize, Debug, Serialize)]
 struct CompetitionData {
-    pub problems: Vec<String>,
     pub finished: bool,
+    pub problems: Vec<String>,
 }

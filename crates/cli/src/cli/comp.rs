@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
-use crate::comp::{add, create, finish, list, remove, rename};
+use crate::comp::{add, create, finish, list, remove, rename, solve, test};
 use crate::config::Settings;
 use crate::util::get_project_root;
 
@@ -93,6 +93,36 @@ pub fn cli() -> Command {
                         .required(true),
                 ]),
         )
+        .subcommand(
+            Command::new("solve")
+                .about("Generate output test cases for all problems in a competition")
+                .arg_required_else_help(true)
+                .args([
+                    Arg::new("comp")
+                        .help("Competition name")
+                        .action(ArgAction::Set)
+                        .required(true),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                ]),
+        )
+        .subcommand(
+            Command::new("test")
+                .about("Run tests on all problems in a competition")
+                .arg_required_else_help(true)
+                .args([
+                    Arg::new("comp")
+                        .help("Competition name")
+                        .action(ArgAction::Set)
+                        .required(true),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                ]),
+        )
         .subcommand_required(true)
 }
 
@@ -151,6 +181,22 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("New competition name is required")?;
 
             rename::rename(&problems_dir, old_comp_name, new_comp_name)?;
+        }
+        Some(("solve", cmd)) => {
+            let comp_name = cmd
+                .try_get_one::<String>("comp")?
+                .context("Competition name is required")?;
+            let solution_lang = cmd.try_get_one::<String>("lang")?;
+
+            solve::solve(settings, &problems_dir, comp_name, solution_lang)?;
+        }
+        Some(("test", cmd)) => {
+            let comp_name = cmd
+                .try_get_one::<String>("comp")?
+                .context("Competition name is required")?;
+            let solution_lang = cmd.try_get_one::<String>("lang")?;
+
+            test::test(settings, &problems_dir, comp_name, solution_lang)?;
         }
         _ => {}
     }
