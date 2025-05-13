@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use serde_json::{json, to_writer, to_writer_pretty};
+use serde_json::{from_reader, json, to_writer, to_writer_pretty};
 use walkdir::WalkDir;
 
 use crate::problem::PROBLEM_MAPPINGS_FILE;
@@ -23,7 +23,7 @@ pub fn sync_mappings(problems_dir: &PathBuf) -> Result<()> {
     }
 
     let mut mappings_file = File::open(path)?;
-    let mut mappings: HashMap<String, String> = serde_json::from_reader(&mappings_file)?;
+    let mut mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     // Remove non-existent problems
     mappings.retain(|_, path| fs::exists(path).unwrap_or(false));
@@ -71,7 +71,7 @@ pub fn get_problem(problems_dir: &PathBuf, problem: &str) -> Result<String> {
     }
 
     let mut mappings_file = File::open(mappings_file_path)?;
-    let mut mappings: HashMap<String, String> = serde_json::from_reader(&mappings_file)?;
+    let mut mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     // Return problem name if possible
     match mappings.get(problem) {
@@ -80,7 +80,7 @@ pub fn get_problem(problems_dir: &PathBuf, problem: &str) -> Result<String> {
             // Sync mappings file and try again
             sync_mappings(problems_dir)?;
             mappings_file = File::open(mappings_file_path)?;
-            mappings = serde_json::from_reader(&mappings_file)?;
+            mappings = from_reader(&mappings_file)?;
 
             let val = mappings
                 .get(problem)
@@ -99,7 +99,7 @@ pub fn problem_exists(problems_dir: &Path, problem: &str) -> Result<bool> {
     }
 
     let mappings_file = File::open(mappings_file_path)?;
-    let mappings: HashMap<String, String> = serde_json::from_reader(&mappings_file)?;
+    let mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     Ok(mappings.contains_key(problem))
 }
