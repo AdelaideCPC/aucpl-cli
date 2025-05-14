@@ -27,12 +27,14 @@ pub fn list(problems_dir: &Path, comp_name: Option<&String>) -> Result<()> {
             for p in &comp_data.problems {
                 eprintln!("  - {p}")
             }
+            eprintln!("Total problems: {}", comp_data.problems.len());
         }
         None => {
             eprintln!("Competitions:");
             for comp in data.keys() {
                 eprintln!(" - {comp}");
             }
+            eprintln!("Total competitions: {}", data.keys().len());
         }
     }
 
