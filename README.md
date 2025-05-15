@@ -67,7 +67,7 @@ problems/
 
 ### Commands
 
-Here are a list of some of the commands.
+Here is a list of some of the commands.
 
 Problems
 
