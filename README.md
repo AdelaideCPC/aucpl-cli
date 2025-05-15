@@ -5,7 +5,23 @@ A helpful command-line interface for AUCPL problem setters.
 > [!WARNING]
 > This tool is currently in active development, and breaking changes can occur at any point.
 
-## Getting started
+## Features
+
+- Automatically generate test case outputs when provided input files and reference solutions
+- Run batch test cases on problems
+- Easily switch between languages when testing solutions
+- Check/validate problems to ensure things are correct (e.g. no missing test cases)
+- Easy management and organisation of problems and competitions with options to create, rename, archive, and more
+
+Planned:
+
+- Automatic formatting of problems and solution files
+- Uploading problems and test cases to an online judge
+- Testing code within judge environments
+- Improve checking/validation of problems, covering more criteria
+- Shell auto completions
+
+## Install
 
 Make sure you have Rust installed. Build the binary:
 
@@ -48,3 +64,31 @@ problems/
 
 - **Problem name**: The name that's used to reference the problem in the CLI
 - **Problem title**: The title of the problem to put in the problem statement
+
+### Commands
+
+Here are a list of some of the commands.
+
+Problems
+
+- `aucpl problem create`: Create a new problem and generate necessary files
+- `aucpl problem solve`: Automatically generate output test cases for a given problem
+- `aucpl problem test`: Automatically run all tests for a given problem
+- `aucpl problem check`: Ensure test cases and files are not missing
+- `aucpl problem archive`: Archive a problem
+
+Competitions
+
+- `aucpl comp create`: Create a new competition
+- `aucpl comp add`: Add a problem to the competition
+- `aucpl comp finish`: Mark a competition as completed and archive all problems under the competition
+- `aucpl comp list`: List all competitions or problems in a competition
+- `aucpl comp solve`: Generate output test cases for all problems in a given competition
+- `aucpl comp test`: Run tests for all problems in a given competition
+- `aucpl comp remove`: Remove a problem from the competition
+- `aucpl comp rename`: Rename a competition
+
+Other
+
+- `aucpl help`: Show help
+- `aucpl sync`: Generate or update the problem mappings file
