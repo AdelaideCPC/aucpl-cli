@@ -23,10 +23,13 @@ pub fn finish(problems_dir: &PathBuf, comp_name: &str) -> Result<()> {
     let comp_problems = &comp_data.problems;
 
     // Archive problems
+    eprintln!("Archiving problems...");
     for problem in comp_problems {
         archive(problems_dir, problem)?;
-        eprintln!("Archived problem {problem}");
+        eprintln!(" - Archived problem {problem}");
     }
+
+    eprintln!("Archived problems: {}", &comp_problems.len());
 
     comp_data.finished = true;
     let comp_file = File::options()
@@ -34,6 +37,8 @@ pub fn finish(problems_dir: &PathBuf, comp_name: &str) -> Result<()> {
         .truncate(true)
         .open(comp_file_path)?;
     to_writer_pretty(&comp_file, &data)?;
+
+    eprintln!("Marked competition '{comp_name}' as finished");
 
     Ok(())
 }
