@@ -5,12 +5,14 @@ use serde::Deserialize;
 
 use crate::util::get_project_root;
 
+pub const SETTINGS_FILE_VERSION: &str = "0.1";
 pub const SETTINGS_FILE: &str = "settings.toml";
 
 /// Configuration for the CLI, loaded via a settings file.
 #[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct Settings {
+    pub version: String,
     pub problems_dir: String,
     pub problem: Problem,
 }
