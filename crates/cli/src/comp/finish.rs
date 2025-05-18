@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 use serde_json::{from_reader, to_writer_pretty};
@@ -8,7 +8,7 @@ use crate::problem::archive::archive;
 
 use super::{Competitions, COMPETITIONS_FILE};
 
-pub fn finish(problems_dir: &PathBuf, comp_name: &str) -> Result<()> {
+pub fn finish(problems_dir: &Path, comp_name: &str) -> Result<()> {
     let comp_file_path = problems_dir.join(COMPETITIONS_FILE);
     if !fs::exists(&comp_file_path)? {
         bail!("Competitions file does not exist");

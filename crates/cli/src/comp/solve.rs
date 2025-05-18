@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 use serde_json::from_reader;
@@ -11,7 +11,7 @@ use super::{Competitions, COMPETITIONS_FILE};
 
 pub fn solve(
     settings: &Settings,
-    problems_dir: &PathBuf,
+    problems_dir: &Path,
     comp_name: &str,
     solution_lang: Option<&String>,
 ) -> Result<()> {

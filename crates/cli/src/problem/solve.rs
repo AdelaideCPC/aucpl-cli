@@ -1,8 +1,9 @@
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Context, Result};
+use normpath::PathExt;
 use subprocess::Exec;
 
 use super::sync_mappings::get_problem;
@@ -12,7 +13,7 @@ use crate::{config::Settings, util::get_input_files_in_directory};
 /// Automatically generate test outputs for a problem, given pre-existing input files.
 pub fn solve(
     settings: &Settings,
-    problems_dir: &PathBuf,
+    problems_dir: &Path,
     problem_name: &str,
     solution_file_name: Option<&str>,
     solution_lang: Option<&String>,
@@ -28,7 +29,7 @@ pub fn solve(
             solution_file_name.context("Failed to get solution file name")?
         ));
     }
-    solution_file = fs::canonicalize(solution_file)?;
+    solution_file = solution_file.normalize()?.into();
 
     if !fs::exists(&solution_file).expect("Failed to check if path exists") {
         bail!("Solution file does not exist: {:?}", solution_file);

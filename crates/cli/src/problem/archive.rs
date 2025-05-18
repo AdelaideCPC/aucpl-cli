@@ -1,7 +1,7 @@
 //! Archive a problem (e.g. problems that have been used in a competition).
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Result};
 
@@ -11,7 +11,7 @@ use super::sync_mappings::{get_problem, sync_mappings};
 
 /// Archive problems by moving them from the `new` to the `archive`
 /// problems folder.
-pub fn archive(problems_dir: &PathBuf, problem_name: &str) -> Result<()> {
+pub fn archive(problems_dir: &Path, problem_name: &str) -> Result<()> {
     sync_mappings(problems_dir)?;
 
     let problem_path = match get_problem(problems_dir, problem_name) {

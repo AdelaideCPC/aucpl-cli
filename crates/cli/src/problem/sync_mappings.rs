@@ -1,8 +1,9 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::{Context, Result};
+use normpath::PathExt;
 use serde_json::{from_reader, json, to_writer, to_writer_pretty};
 use walkdir::WalkDir;
 
@@ -13,9 +14,9 @@ use crate::util::get_project_root;
 ///
 /// The problem mappings file, `problem-mappings.json` maps the problem name
 /// to the relative file location of the problem.
-pub fn sync_mappings(problems_dir: &PathBuf) -> Result<()> {
+pub fn sync_mappings(problems_dir: &Path) -> Result<()> {
     let project_root = get_project_root()?;
-    let problems_dir = fs::canonicalize(problems_dir)?;
+    let problems_dir = problems_dir.normalize()?;
     let path = &problems_dir.join(PROBLEM_MAPPINGS_FILE);
     if !fs::exists(path)? {
         let file = File::create(path)?;
@@ -63,7 +64,7 @@ pub fn sync_mappings(problems_dir: &PathBuf) -> Result<()> {
 
 /// Get path to the problem from the problem mappings file.
 /// If the problem doesn't exist, then the problem mappings file is synced.
-pub fn get_problem(problems_dir: &PathBuf, problem: &str) -> Result<String> {
+pub fn get_problem(problems_dir: &Path, problem: &str) -> Result<String> {
     let mappings_file_path = &problems_dir.join(PROBLEM_MAPPINGS_FILE);
     if !fs::exists(mappings_file_path)? {
         let file = File::create(mappings_file_path)?;

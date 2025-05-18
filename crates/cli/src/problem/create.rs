@@ -2,7 +2,7 @@
 
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Result};
 use regex::Regex;
@@ -15,7 +15,7 @@ const MAX_DIFFICULTY_BUCKET: u16 = 5000;
 const DIFFICULTY_BUCKET_INTERVAL: u16 = 200;
 
 /// Create a new problem
-pub fn create(problems_dir: &PathBuf, problem_name: &str, difficulty: u16) -> Result<()> {
+pub fn create(problems_dir: &Path, problem_name: &str, difficulty: u16) -> Result<()> {
     let mut bucketed_difficulty = MIN_DIFFICULTY_BUCKET;
     if difficulty > MIN_DIFFICULTY_BUCKET {
         bucketed_difficulty += ((difficulty - MIN_DIFFICULTY_BUCKET) / DIFFICULTY_BUCKET_INTERVAL)
