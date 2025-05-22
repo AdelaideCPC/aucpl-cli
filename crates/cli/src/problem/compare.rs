@@ -26,9 +26,9 @@ pub fn compare(
     let solution_lang_2 = solution_lang_2.unwrap_or(&settings.problem.default_lang);
 
     let bin_file_1 = problem_path.join("solutions/solution_1.out");
-    let script_file_1 = problem_path.join(format!("solutions/solution.{}", solution_lang_1));
+    let script_file_1 = problem_path.join(format!("solutions/solution_1.{}", solution_lang_1));
     let bin_file_2 = problem_path.join("solutions/solution_2.out");
-    let script_file_2 = problem_path.join(format!("solutions/solution.{}", solution_lang_2));
+    let script_file_2 = problem_path.join(format!("solutions/solution_2.{}", solution_lang_2));
 
     let run_command_1 = get_cmd(
         settings,
