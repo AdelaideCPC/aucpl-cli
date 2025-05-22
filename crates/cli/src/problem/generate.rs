@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 
@@ -35,6 +35,11 @@ pub fn generate(
     let (output, _) = get_output(&bin_file, &script_file, &run_command, None)?;
     let mut test_file = File::create(problem_path.join("tests/generated.in"))?;
     test_file.write_all(output.as_bytes())?;
+
+    // Delete the compiled run files, if it exists
+    if bin_file.exists() {
+        fs::remove_file(bin_file)?;
+    }
 
     Ok(())
 }
