@@ -73,14 +73,11 @@ pub fn get_cmd(
 }
 
 pub fn get_output(
-    problem_path: &PathBuf,
-    test_file: &str,
     bin_file: &PathBuf,
     script_file: &PathBuf,
     run_command: &Vec<String>,
+    input_file_path: Option<&PathBuf>,
 ) -> Result<(String, Duration)> {
-    let input_file_path = problem_path.join(format!("tests/{}", test_file));
-
     let cmd_iter = run_command.iter();
     let mut cmd_iter_clone = cmd_iter.clone();
     let cmd = cmd_iter_clone.next().context("Failed to get command")?;
@@ -99,10 +96,13 @@ pub fn get_output(
         }
     }
 
-    let input_file = File::open(input_file_path)?;
-
     let start_time = Instant::now();
-    final_cmd = final_cmd.stdin(input_file).stdout(Redirection::Pipe);
+    if input_file_path.is_some() {
+        let input_file = File::open(input_file_path.context("Failed to get input file")?)?;
+        final_cmd = final_cmd.stdin(input_file).stdout(Redirection::Pipe);
+    } else {
+        final_cmd = final_cmd.stdout(Redirection::Pipe);
+    }
     let out_str = final_cmd.capture()?.stdout_str();
     let elapsed_time = start_time.elapsed();
 

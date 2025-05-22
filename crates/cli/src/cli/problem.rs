@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, compare, create, solve, test};
+use crate::problem::{archive, check, compare, create, generate, solve, test};
 use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
@@ -76,6 +76,25 @@ pub fn cli() -> Command {
                         .action(ArgAction::Set)
                         .required(true),
                 ),
+        )
+        .subcommand(
+            Command::new("generate")
+                .about("Generate a test case")
+                .args([
+                    Arg::new("file")
+                        .long("file")
+                        .help("Name of the first generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the first generator file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set),
+                ]),
         )
         .subcommand(
             Command::new("solve")
@@ -172,6 +191,23 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem difficulty is required")?;
 
             create::create(&problems_dir, problem_name, *difficulty)?;
+        }
+        Some(("generate", cmd)) => {
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
+
+            let generator_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
+            let generator_lang = cmd.try_get_one::<String>("lang")?;
+
+            generate::generate(
+                settings,
+                &problems_dir,
+                problem_name,
+                generator_file,
+                generator_lang,
+            )?;
         }
         Some(("solve", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {

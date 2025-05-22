@@ -20,32 +20,32 @@ pub fn compare(
     solution_lang_2: Option<&String>,
 ) -> Result<()> {
     let project_root = get_project_root()?;
-    let problem = project_root.join(get_problem(problems_dir, problem_name)?);
+    let problem_path = project_root.join(get_problem(problems_dir, problem_name)?);
 
     let solution_lang_1 = solution_lang_1.unwrap_or(&settings.problem.default_lang);
     let solution_lang_2 = solution_lang_2.unwrap_or(&settings.problem.default_lang);
 
-    let bin_file_1 = problem.join("solutions/solution_1.out");
-    let script_file_1 = problem.join(format!("solutions/solution.{}", solution_lang_1));
-    let bin_file_2 = problem.join("solutions/solution_2.out");
-    let script_file_2 = problem.join(format!("solutions/solution.{}", solution_lang_2));
+    let bin_file_1 = problem_path.join("solutions/solution_1.out");
+    let script_file_1 = problem_path.join(format!("solutions/solution.{}", solution_lang_1));
+    let bin_file_2 = problem_path.join("solutions/solution_2.out");
+    let script_file_2 = problem_path.join(format!("solutions/solution.{}", solution_lang_2));
 
     let run_command_1 = get_cmd(
         settings,
-        &problem,
+        &problem_path,
         solution_file_name_1,
         solution_lang_1,
         &bin_file_1,
     )?;
     let run_command_2 = get_cmd(
         settings,
-        &problem,
+        &problem_path,
         solution_file_name_2,
         solution_lang_2,
         &bin_file_2,
     )?;
 
-    let test_files = get_input_files_in_directory(problem.join("tests"))?;
+    let test_files = get_input_files_in_directory(problem_path.join("tests"))?;
 
     let mut tests_passed = 0;
     let mut total_tests = 0;
@@ -55,19 +55,19 @@ pub fn compare(
     eprintln!("Running the solution files for each test case...");
 
     for test_file in test_files {
+        let input_file_path = problem_path.join(format!("tests/{}", test_file));
+
         let (output_1, elapsed_1) = get_output(
-            &problem,
-            &test_file,
             &bin_file_1,
             &script_file_1,
             &run_command_1,
+            Some(&input_file_path),
         )?;
         let (output_2, elapsed_2) = get_output(
-            &problem,
-            &test_file,
             &bin_file_2,
             &script_file_2,
             &run_command_2,
+            Some(&input_file_path),
         )?;
         if output_1.as_bytes() != output_2.as_bytes() {
             eprintln!(
