@@ -2,7 +2,9 @@
 
 pub mod archive;
 pub mod check;
+pub mod compare;
 pub mod create;
+pub mod run;
 pub mod solve;
 pub mod sync_mappings;
 pub mod test;

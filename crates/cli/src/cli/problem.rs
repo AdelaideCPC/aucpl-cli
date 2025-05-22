@@ -4,7 +4,7 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, create, solve, test};
+use crate::problem::{archive, check, compare, create, solve, test};
 use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
@@ -31,6 +31,33 @@ pub fn cli() -> Command {
                         .action(ArgAction::Set)
                         .required(true),
                 ),
+        )
+        .subcommand(
+            Command::new("compare")
+                .about("Compare two solutions")
+                .args([
+                    Arg::new("file1")
+                        .long("file1")
+                        .help("Name of the first solution file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang1")
+                        .long("lang1")
+                        .help("Language of the first solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("file2")
+                        .long("file2")
+                        .help("Name of the second solution file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang2")
+                        .long("lang2")
+                        .help("Language of the second solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set),
+                ]),
         )
         .subcommand(
             Command::new("create")
@@ -113,6 +140,27 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
 
             check::check(problems_dir, problem_name)
                 .map_err(|err| anyhow!("Failed check: {err}"))?;
+        }
+        Some(("compare", cmd)) => {
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
+
+            let solution_file_1 = cmd.try_get_one::<String>("file1")?.map(|f| f.as_str());
+            let solution_lang_1 = cmd.try_get_one::<String>("lang1")?;
+            let solution_file_2 = cmd.try_get_one::<String>("file2")?.map(|f| f.as_str());
+            let solution_lang_2 = cmd.try_get_one::<String>("lang2")?;
+
+            compare::compare(
+                settings,
+                &problems_dir,
+                problem_name,
+                solution_file_1,
+                solution_lang_1,
+                solution_file_2,
+                solution_lang_2,
+            )?;
         }
         Some(("create", cmd)) => {
             let problem_name = cmd
