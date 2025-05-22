@@ -36,6 +36,10 @@ pub fn cli() -> Command {
             Command::new("compare")
                 .about("Compare two solutions")
                 .args([
+                    Arg::new("generate")
+                        .long("generate")
+                        .help("Generate new test cases until the solutions produce different results")
+                        .action(ArgAction::SetTrue),
                     Arg::new("file1")
                         .long("file1")
                         .help("Name of the first solution file")
@@ -51,6 +55,14 @@ pub fn cli() -> Command {
                     Arg::new("lang2")
                         .long("lang2")
                         .help("Language of the second solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("generator_file")
+                        .long("generator_file")
+                        .help("Name of the generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("generator_lang")
+                        .long("generator_lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
@@ -165,20 +177,31 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 Some(name) => name,
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
+            let generate = match cmd.try_get_one::<bool>("generate")? {
+                Some(generate) => generate,
+                None => &false,
+            };
 
             let solution_file_1 = cmd.try_get_one::<String>("file1")?.map(|f| f.as_str());
             let solution_lang_1 = cmd.try_get_one::<String>("lang1")?;
             let solution_file_2 = cmd.try_get_one::<String>("file2")?.map(|f| f.as_str());
             let solution_lang_2 = cmd.try_get_one::<String>("lang2")?;
+            let generator_file = cmd
+                .try_get_one::<String>("generator_file")?
+                .map(|f| f.as_str());
+            let generator_lang = cmd.try_get_one::<String>("generator_lang")?;
 
             compare::compare(
                 settings,
                 &problems_dir,
                 problem_name,
+                generate,
                 solution_file_1,
                 solution_lang_1,
                 solution_file_2,
                 solution_lang_2,
+                generator_file,
+                generator_lang,
             )?;
         }
         Some(("create", cmd)) => {

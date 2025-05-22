@@ -11,36 +11,37 @@ use crate::config::Settings;
 pub fn get_cmd(
     settings: &Settings,
     problem: &PathBuf,
-    solution_file_name: Option<&str>,
-    solution_lang: &String,
+    file_type: &str,
+    file_name: Option<&str>,
+    lang: &String,
     bin_file: &PathBuf,
 ) -> Result<Vec<String>> {
-    let mut solution_file = problem.join(format!("solutions/solution.{}", solution_lang));
-    if solution_file_name.is_some() {
-        solution_file = problem.join(format!(
-            "solutions/{}",
-            solution_file_name.context("Failed to get solution file name")?
+    let mut file_path = problem.join(format!("{}s/{}.{}", file_type, file_type, lang));
+    if file_name.is_some() {
+        file_path = problem.join(format!(
+            "{file_type}s/{}",
+            file_name.context(format!("Failed to get {file_type} file name"))?
         ));
     }
-    solution_file = solution_file.normalize()?.into();
+    file_path = file_path.normalize().context(format!("Failed to normalize {} (does the file exist?)", file_path.display()))?.into();
 
-    if !fs::exists(&solution_file).expect("Failed to check if path exists") {
-        bail!("Solution file does not exist: {:?}", solution_file);
+    if !fs::exists(&file_path).expect("Failed to check if path exists") {
+        bail!("{file_type} file does not exist: {:?}", file_path);
     }
 
-    eprintln!("Using solution file at: {}", solution_file.display());
+    eprintln!("Using {file_type} file at: {}", file_path.display());
 
     let lang_settings = settings
         .problem
         .solution
-        .get(solution_lang)
+        .get(lang)
         .context(format!(
-            "Could not get settings for language `{solution_lang}`"
+            "Could not get settings for language `{lang}`"
         ))?;
 
     let compile_command = lang_settings.compile_command.clone();
 
-    // Check if the solution file is a script (if it needs compilation or not)
+    // Check if the file is a script (if it needs compilation or not)
     let needs_compilation = compile_command.is_some();
     let compile_command = compile_command.unwrap_or_default();
     if needs_compilation && compile_command.is_empty() {
@@ -53,12 +54,12 @@ pub fn get_cmd(
         for c in cmd_iter {
             // Replace strings where necessary
             final_cmd = match c.as_str() {
-                "@in_file" => final_cmd.arg(&solution_file),
+                "@in_file" => final_cmd.arg(&file_path),
                 "@bin_file" => final_cmd.arg(&bin_file),
                 _ => final_cmd.arg(c),
             }
         }
-        eprint!("Compiling the solution file... ");
+        eprint!("Compiling the {file_type} file... ");
         // Run the compile command
         final_cmd.join()?;
         eprintln!("Done");
