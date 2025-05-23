@@ -23,7 +23,13 @@ pub fn get_cmd(
             file_name.context(format!("Failed to get {file_type} file name"))?
         ));
     }
-    file_path = file_path.normalize().context(format!("Failed to normalize {} (does the file exist?)", file_path.display()))?.into();
+    file_path = file_path
+        .normalize()
+        .context(format!(
+            "Failed to normalize {} (does the file exist?)",
+            file_path.display()
+        ))?
+        .into();
 
     if !fs::exists(&file_path).expect("Failed to check if path exists") {
         bail!("{file_type} file does not exist: {:?}", file_path);
@@ -35,9 +41,7 @@ pub fn get_cmd(
         .problem
         .solution
         .get(lang)
-        .context(format!(
-            "Could not get settings for language `{lang}`"
-        ))?;
+        .context(format!("Could not get settings for language `{lang}`"))?;
 
     let compile_command = lang_settings.compile_command.clone();
 
