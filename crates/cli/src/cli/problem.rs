@@ -177,10 +177,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 Some(name) => name,
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
-            let generate = match cmd.try_get_one::<bool>("generate")? {
-                Some(generate) => generate,
-                None => &false,
-            };
+            let generate = (cmd.try_get_one::<bool>("generate")?).unwrap_or(&false);
 
             let solution_file_1 = cmd.try_get_one::<String>("file1")?.map(|f| f.as_str());
             let solution_lang_1 = cmd.try_get_one::<String>("lang1")?;

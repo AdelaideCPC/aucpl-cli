@@ -11,6 +11,7 @@ use crate::util::get_project_root;
 use crate::{config::Settings, util::get_input_files_in_directory};
 
 /// Compare two solutions.
+#[allow(clippy::too_many_arguments)]
 pub fn compare(
     settings: &Settings,
     problems_dir: &Path,
@@ -22,7 +23,7 @@ pub fn compare(
     solution_lang_2: Option<&String>,
     generator_file: Option<&str>,
     generator_lang: Option<&String>,
-) -> Result<(), anyhow::Error> {
+) -> Result<()> {
     let project_root = get_project_root()?;
     let problem_path = project_root.join(get_problem(problems_dir, problem_name)?);
 
@@ -30,15 +31,21 @@ pub fn compare(
     let solution_lang_2 = solution_lang_2.unwrap_or(&settings.problem.default_lang);
 
     let bin_file_1 = problem_path.join("solutions/solution_1.out");
-    let script_file_1 = problem_path.join(format!("solutions/{}", match solution_file_name_1 {
-        Some(name) => name.to_owned(),
-        None => format!("solution.{}", solution_lang_1),
-    }));
+    let script_file_1 = problem_path.join(format!(
+        "solutions/{}",
+        match solution_file_name_1 {
+            Some(name) => name.to_owned(),
+            None => format!("solution.{}", solution_lang_1),
+        }
+    ));
     let bin_file_2 = problem_path.join("solutions/solution_2.out");
-    let script_file_2 = problem_path.join(format!("solutions/{}", match solution_file_name_2 {
-        Some(name) => name.to_owned(),
-        None => format!("solution.{}", solution_lang_2),
-    }));
+    let script_file_2 = problem_path.join(format!(
+        "solutions/{}",
+        match solution_file_name_2 {
+            Some(name) => name.to_owned(),
+            None => format!("solution.{}", solution_lang_2),
+        }
+    ));
 
     let run_command_1 = get_cmd(
         settings,

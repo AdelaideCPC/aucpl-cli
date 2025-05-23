@@ -2,7 +2,7 @@ use anyhow::{bail, Context, Result};
 use normpath::PathExt;
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use subprocess::{Exec, Redirection};
 
@@ -10,7 +10,7 @@ use crate::config::Settings;
 
 pub fn get_cmd(
     settings: &Settings,
-    problem: &PathBuf,
+    problem: &Path,
     file_type: &str,
     file_name: Option<&str>,
     lang: &String,
@@ -55,7 +55,7 @@ pub fn get_cmd(
             // Replace strings where necessary
             final_cmd = match c.as_str() {
                 "@in_file" => final_cmd.arg(&file_path),
-                "@bin_file" => final_cmd.arg(&bin_file),
+                "@bin_file" => final_cmd.arg(bin_file),
                 _ => final_cmd.arg(c),
             }
         }
@@ -76,7 +76,7 @@ pub fn get_cmd(
 pub fn get_output(
     bin_file: &PathBuf,
     script_file: &PathBuf,
-    run_command: &Vec<String>,
+    run_command: &[String],
     input_file_path: Option<&PathBuf>,
 ) -> Result<(String, Duration)> {
     let cmd_iter = run_command.iter();
@@ -91,8 +91,8 @@ pub fn get_output(
     for c in cmd_iter_clone {
         // Replace strings where necessary
         final_cmd = match c.as_str() {
-            "@bin_file" => final_cmd.arg(&bin_file),
-            "@script_file" => final_cmd.arg(&script_file),
+            "@bin_file" => final_cmd.arg(bin_file),
+            "@script_file" => final_cmd.arg(script_file),
             _ => final_cmd.arg(c),
         }
     }
