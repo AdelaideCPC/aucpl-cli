@@ -8,6 +8,7 @@ use subprocess::{Exec, Redirection};
 
 use crate::config::Settings;
 
+/// Get the command to be run for a given solution / generator file.
 pub fn get_cmd(
     settings: &Settings,
     problem: &Path,
@@ -16,7 +17,7 @@ pub fn get_cmd(
     lang: &String,
     bin_file: &PathBuf,
 ) -> Result<Vec<String>> {
-    let mut file_path = problem.join(format!("{}s/{}.{}", file_type, file_type, lang));
+    let mut file_path = problem.join(format!("{file_type}s/{file_type}.{lang}"));
     if file_name.is_some() {
         file_path = problem.join(format!(
             "{file_type}s/{}",
@@ -77,6 +78,7 @@ pub fn get_cmd(
     Ok(run_command)
 }
 
+/// Get the output and elapsed time of a file run.
 pub fn get_output(
     bin_file: &PathBuf,
     script_file: &PathBuf,

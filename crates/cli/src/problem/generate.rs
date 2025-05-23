@@ -9,6 +9,7 @@ use super::sync_mappings::get_problem;
 use crate::config::Settings;
 use crate::util::get_project_root;
 
+/// Generate a test case input with a generator file.
 pub fn generate(
     settings: &Settings,
     problems_dir: &Path,
