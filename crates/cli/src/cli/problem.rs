@@ -13,23 +13,23 @@ pub fn cli() -> Command {
         .subcommand(
             Command::new("archive")
                 .about("Archive a problem")
-                .arg_required_else_help(true)
                 .arg(
-                    Arg::new("name")
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
                         .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set)
-                        .required(true),
                 ),
         )
         .subcommand(
             Command::new("check")
                 .about("Check that the problem folder and test files are valid")
-                .arg_required_else_help(true)
                 .arg(
-                    Arg::new("name")
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
                         .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set)
-                        .required(true),
                 ),
         )
         .subcommand(
@@ -99,17 +99,19 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
 
     match args.subcommand() {
         Some(("archive", cmd)) => {
-            let problem_name = cmd
-                .try_get_one::<String>("name")?
-                .context("Problem name is required")?;
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
 
             archive::archive(&problems_dir, problem_name)?;
             eprintln!("Archived problem '{problem_name}'");
         }
         Some(("check", cmd)) => {
-            let problem_name = cmd
-                .try_get_one::<String>("name")?
-                .context("Problem name is required")?;
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
 
             check::check(problems_dir, problem_name)
                 .map_err(|err| anyhow!("Failed check: {err}"))?;
