@@ -3,6 +3,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use uuid::Uuid;
 
 use super::generate;
 use super::run::{get_cmd, get_output};
@@ -74,12 +75,15 @@ pub fn compare(
         loop {
             total_tests += 1;
 
+            let test_name = format!("generated_{}", Uuid::new_v4());
+
             generate::generate(
                 settings,
                 problems_dir,
                 problem_name,
                 generator_file,
                 generator_lang,
+                &test_name,
             )
             .context("Failed to generate test case")?;
 
@@ -112,7 +116,9 @@ pub fn compare(
                 eprintln!(
                     "    Total percentage time difference: {:.5}%",
                     (total_time_2 - total_time_1) * 100f64 / total_time_1
-                )
+                );
+                fs::remove_file(problem_path.join(format!("tests/{}.in", test_name)))
+                    .context("Failed to delete generated test case")?;
             }
             total_time_1 += elapsed_1.as_secs_f64();
             total_time_2 += elapsed_2.as_secs_f64();

@@ -106,6 +106,10 @@ pub fn cli() -> Command {
                         .long("problem")
                         .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set),
+                    Arg::new("test-name")
+                        .long("test-name")
+                        .help("Name of the test case (default: \"generated\", which generates \"tests/generated.in\")")
+                        .action(ArgAction::Set),
                 ]),
         )
         .subcommand(
@@ -220,6 +224,10 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
 
             let generator_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
             let generator_lang = cmd.try_get_one::<String>("lang")?;
+            let test_name = cmd
+                .try_get_one::<String>("test-name")?
+                .map(|f| f.as_str())
+                .unwrap_or("generated");
 
             generate::generate(
                 settings,
@@ -227,6 +235,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 problem_name,
                 generator_file,
                 generator_lang,
+                test_name,
             )?;
         }
         Some(("solve", cmd)) => {
