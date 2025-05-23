@@ -21,6 +21,7 @@ pub struct Settings {
 #[derive(Debug, Deserialize)]
 pub struct Problem {
     pub default_lang: String,
+    pub default_generator_lang: String,
     pub solution: HashMap<String, LangSolution>,
 }
 

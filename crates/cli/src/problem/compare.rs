@@ -6,64 +6,31 @@ use anyhow::{Context, Result};
 use uuid::Uuid;
 
 use super::generate;
-use super::run::{get_cmd, get_output};
+use super::run::{get_cmd, get_output, RunnableFile};
 use super::sync_mappings::get_problem;
 use crate::util::get_project_root;
 use crate::{config::Settings, util::get_input_files_in_directory};
 
 /// Compare two solutions.
-#[allow(clippy::too_many_arguments)]
 pub fn compare(
     settings: &Settings,
     problems_dir: &Path,
     problem_name: &str,
     generate: &bool,
-    solution_file_name_1: Option<&str>,
-    solution_lang_1: Option<&String>,
-    solution_file_name_2: Option<&str>,
-    solution_lang_2: Option<&String>,
-    generator_file: Option<&str>,
-    generator_lang: Option<&String>,
+    solution_1: &RunnableFile,
+    solution_2: &RunnableFile,
+    generator: &RunnableFile,
 ) -> Result<()> {
     let project_root = get_project_root()?;
     let problem_path = project_root.join(get_problem(problems_dir, problem_name)?);
 
-    let solution_lang_1 = solution_lang_1.unwrap_or(&settings.problem.default_lang);
-    let solution_lang_2 = solution_lang_2.unwrap_or(&settings.problem.default_lang);
-
     let bin_file_1 = problem_path.join("solutions/solution_1.out");
-    let script_file_1 = problem_path.join(format!(
-        "solutions/{}",
-        match solution_file_name_1 {
-            Some(name) => name.to_owned(),
-            None => format!("solution.{}", solution_lang_1),
-        }
-    ));
+    let script_file_1 = problem_path.join(format!("{solution_1}"));
     let bin_file_2 = problem_path.join("solutions/solution_2.out");
-    let script_file_2 = problem_path.join(format!(
-        "solutions/{}",
-        match solution_file_name_2 {
-            Some(name) => name.to_owned(),
-            None => format!("solution.{}", solution_lang_2),
-        }
-    ));
+    let script_file_2 = problem_path.join(format!("{solution_2}"));
 
-    let run_command_1 = get_cmd(
-        settings,
-        &problem_path,
-        "solution",
-        solution_file_name_1,
-        solution_lang_1,
-        &bin_file_1,
-    )?;
-    let run_command_2 = get_cmd(
-        settings,
-        &problem_path,
-        "solution",
-        solution_file_name_2,
-        solution_lang_2,
-        &bin_file_2,
-    )?;
+    let run_command_1 = get_cmd(settings, &problem_path, solution_1, &bin_file_1)?;
+    let run_command_2 = get_cmd(settings, &problem_path, solution_2, &bin_file_2)?;
 
     if *generate {
         let input_file_path = problem_path.join("tests/generated.in");
@@ -77,15 +44,8 @@ pub fn compare(
 
             let test_name = format!("generated_{}", Uuid::new_v4());
 
-            generate::generate(
-                settings,
-                problems_dir,
-                problem_name,
-                generator_file,
-                generator_lang,
-                &test_name,
-            )
-            .context("Failed to generate test case")?;
+            generate::generate(settings, problems_dir, problem_name, generator, &test_name)
+                .context("Failed to generate test case")?;
 
             let (output_1, elapsed_1) = get_output(
                 &bin_file_1,

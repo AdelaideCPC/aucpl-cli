@@ -4,7 +4,11 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, compare, create, generate, solve, test};
+use crate::problem::{
+    archive, check, compare, create, generate,
+    run::{RunnableCategory, RunnableFile},
+    solve, test,
+};
 use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
@@ -183,26 +187,35 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             };
             let generate = (cmd.try_get_one::<bool>("generate")?).unwrap_or(&false);
 
-            let solution_file_1 = cmd.try_get_one::<String>("file1")?.map(|f| f.as_str());
-            let solution_lang_1 = cmd.try_get_one::<String>("lang1")?;
-            let solution_file_2 = cmd.try_get_one::<String>("file2")?.map(|f| f.as_str());
-            let solution_lang_2 = cmd.try_get_one::<String>("lang2")?;
-            let generator_file = cmd
-                .try_get_one::<String>("generator-file")?
-                .map(|f| f.as_str());
-            let generator_lang = cmd.try_get_one::<String>("generator-lang")?;
+            let solution_1 = RunnableFile::new(
+                settings,
+                RunnableCategory::Solution,
+                cmd.try_get_one::<String>("file1")?,
+                cmd.try_get_one::<String>("lang1")?,
+            );
+
+            let solution_2 = RunnableFile::new(
+                settings,
+                RunnableCategory::Solution,
+                cmd.try_get_one::<String>("file2")?,
+                cmd.try_get_one::<String>("lang2")?,
+            );
+
+            let generator = RunnableFile::new(
+                settings,
+                RunnableCategory::Generator,
+                cmd.try_get_one::<String>("generator-file")?,
+                cmd.try_get_one::<String>("generator-lang")?,
+            );
 
             compare::compare(
                 settings,
                 &problems_dir,
                 problem_name,
                 generate,
-                solution_file_1,
-                solution_lang_1,
-                solution_file_2,
-                solution_lang_2,
-                generator_file,
-                generator_lang,
+                &solution_1,
+                &solution_2,
+                &generator,
             )?;
         }
         Some(("create", cmd)) => {
@@ -222,21 +235,19 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let generator_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
-            let generator_lang = cmd.try_get_one::<String>("lang")?;
+            let generator = RunnableFile::new(
+                settings,
+                RunnableCategory::Generator,
+                cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
+            );
+
             let test_name = cmd
                 .try_get_one::<String>("test-name")?
                 .map(|f| f.as_str())
                 .unwrap_or("generated");
 
-            generate::generate(
-                settings,
-                &problems_dir,
-                problem_name,
-                generator_file,
-                generator_lang,
-                test_name,
-            )?;
+            generate::generate(settings, &problems_dir, problem_name, &generator, test_name)?;
         }
         Some(("solve", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {

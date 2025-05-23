@@ -1,6 +1,7 @@
 use anyhow::{bail, Context, Result};
 use normpath::PathExt;
 use std::ffi::OsStr;
+use std::fmt;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
@@ -8,22 +9,62 @@ use subprocess::{Exec, Redirection};
 
 use crate::config::Settings;
 
+#[derive(Eq, PartialEq)]
+pub enum RunnableCategory {
+    Solution,
+    Generator,
+}
+
+impl fmt::Display for RunnableCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RunnableCategory::Solution => write!(f, "solution"),
+            RunnableCategory::Generator => write!(f, "generator"),
+        }
+    }
+}
+
+pub struct RunnableFile {
+    pub category: RunnableCategory,
+    pub name: String,
+    pub lang: String,
+}
+
+impl RunnableFile {
+    pub fn new(
+        settings: &Settings,
+        category: RunnableCategory,
+        name: Option<&String>,
+        lang: Option<&String>,
+    ) -> Self {
+        Self {
+            name: name.cloned().unwrap_or(format!("{category}")),
+            lang: lang
+                .cloned()
+                .unwrap_or(if category == RunnableCategory::Solution {
+                    settings.problem.default_lang.clone()
+                } else {
+                    settings.problem.default_generator_lang.clone()
+                }),
+            category,
+        }
+    }
+}
+
+impl fmt::Display for RunnableFile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}s/{}.{}", self.category, self.name, self.lang)
+    }
+}
+
 /// Get the command to be run for a given solution / generator file.
 pub fn get_cmd(
     settings: &Settings,
     problem: &Path,
-    file_type: &str,
-    file_name: Option<&str>,
-    lang: &String,
+    file: &RunnableFile,
     bin_file: &PathBuf,
 ) -> Result<Vec<String>> {
-    let mut file_path = problem.join(format!("{file_type}s/{file_type}.{lang}"));
-    if file_name.is_some() {
-        file_path = problem.join(format!(
-            "{file_type}s/{}",
-            file_name.context(format!("Failed to get {file_type} file name"))?
-        ));
-    }
+    let mut file_path = problem.join(format!("{}", file));
     file_path = file_path
         .normalize()
         .context(format!(
@@ -31,18 +72,20 @@ pub fn get_cmd(
             file_path.display()
         ))?
         .into();
-
     if !fs::exists(&file_path).expect("Failed to check if path exists") {
-        bail!("{file_type} file does not exist: {:?}", file_path);
+        bail!("{} file does not exist: {:?}", file.category, file_path);
     }
 
-    eprintln!("Using {file_type} file at: {}", file_path.display());
+    eprintln!("Using {} file at: {}", file.category, file_path.display());
 
     let lang_settings = settings
         .problem
         .solution
-        .get(lang)
-        .context(format!("Could not get settings for language `{lang}`"))?;
+        .get(file.lang.as_str())
+        .context(format!(
+            "Could not get settings for language `{}`",
+            file.lang
+        ))?;
 
     let compile_command = lang_settings.compile_command.clone();
 
@@ -64,7 +107,7 @@ pub fn get_cmd(
                 _ => final_cmd.arg(c),
             }
         }
-        eprint!("Compiling the {file_type} file... ");
+        eprint!("Compiling the {} file... ", file.category);
         // Run the compile command
         final_cmd.join()?;
         eprintln!("Done");
