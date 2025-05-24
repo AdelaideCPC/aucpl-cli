@@ -4,7 +4,11 @@ use anyhow::{anyhow, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
-use crate::problem::{archive, check, create, solve, test};
+use crate::problem::{
+    archive, check, compare, create, generate,
+    run::{RunnableCategory, RunnableFile},
+    solve, test,
+};
 use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
@@ -33,6 +37,45 @@ pub fn cli() -> Command {
                 ),
         )
         .subcommand(
+            Command::new("compare")
+                .about("Compare two solutions")
+                .args([
+                    Arg::new("generate")
+                        .long("generate")
+                        .help("Generate new test cases until the solutions produce different results")
+                        .action(ArgAction::SetTrue),
+                    Arg::new("file1")
+                        .long("file1")
+                        .help("Name of the first solution file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang1")
+                        .long("lang1")
+                        .help("Language of the first solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("file2")
+                        .long("file2")
+                        .help("Name of the second solution file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang2")
+                        .long("lang2")
+                        .help("Language of the second solution file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("generator-file")
+                        .long("generator-file")
+                        .help("Name of the generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("generator-lang")
+                        .long("generator-lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set),
+                ]),
+        )
+        .subcommand(
             Command::new("create")
                 .about("Create a new problem and generate necessary files")
                 .arg_required_else_help(true)
@@ -49,6 +92,29 @@ pub fn cli() -> Command {
                         .action(ArgAction::Set)
                         .required(true),
                 ),
+        )
+        .subcommand(
+            Command::new("generate")
+                .about("Generate a test case input with a generator file")
+                .args([
+                    Arg::new("file")
+                        .long("file")
+                        .help("Name of the generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set),
+                    Arg::new("test-name")
+                        .long("test-name")
+                        .help("Name of the test case (default: \"generated\", which generates \"tests/generated.in\")")
+                        .action(ArgAction::Set),
+                ]),
         )
         .subcommand(
             Command::new("solve")
@@ -116,6 +182,44 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             check::check(problems_dir, problem_name)
                 .map_err(|err| anyhow!("Failed check: {err}"))?;
         }
+        Some(("compare", cmd)) => {
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
+            let generate = (cmd.try_get_one::<bool>("generate")?).unwrap_or(&false);
+
+            let solution_1 = RunnableFile::new(
+                settings,
+                RunnableCategory::Solution,
+                cmd.try_get_one::<String>("file1")?,
+                cmd.try_get_one::<String>("lang1")?,
+            );
+
+            let solution_2 = RunnableFile::new(
+                settings,
+                RunnableCategory::Solution,
+                cmd.try_get_one::<String>("file2")?,
+                cmd.try_get_one::<String>("lang2")?,
+            );
+
+            let generator = RunnableFile::new(
+                settings,
+                RunnableCategory::Generator,
+                cmd.try_get_one::<String>("generator-file")?,
+                cmd.try_get_one::<String>("generator-lang")?,
+            );
+
+            compare::compare(
+                settings,
+                &problems_dir,
+                problem_name,
+                generate,
+                &solution_1,
+                &solution_2,
+                &generator,
+            )?;
+        }
         Some(("create", cmd)) => {
             let problem_name = cmd
                 .try_get_one::<String>("name")?
@@ -126,6 +230,26 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Problem difficulty is required")?;
 
             create::create(&problems_dir, problem_name, *difficulty)?;
+        }
+        Some(("generate", cmd)) => {
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
+
+            let generator = RunnableFile::new(
+                settings,
+                RunnableCategory::Generator,
+                cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
+            );
+
+            let test_name = cmd
+                .try_get_one::<String>("test-name")?
+                .map(|f| f.as_str())
+                .unwrap_or("generated");
+
+            generate::generate(settings, &problems_dir, problem_name, &generator, test_name)?;
         }
         Some(("solve", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {

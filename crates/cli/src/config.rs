@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::util::get_project_root;
 
-pub const SETTINGS_FILE_VERSION: &str = "0.1";
+pub const SETTINGS_FILE_VERSION: &str = "0.2";
 pub const SETTINGS_FILE: &str = "settings.toml";
 
 /// Configuration for the CLI, loaded via a settings file.
@@ -21,6 +21,7 @@ pub struct Settings {
 #[derive(Debug, Deserialize)]
 pub struct Problem {
     pub default_lang: String,
+    pub default_generator_lang: String,
     pub solution: HashMap<String, LangSolution>,
 }
 
