@@ -1,4 +1,4 @@
-version = "0.1"
+version = "0.2"
 problems_dir = "./problems"
 
 [problem]
@@ -7,6 +7,7 @@ problems_dir = "./problems"
 #
 # e.g. cpp, py, java, etc.
 default_lang = "cpp"
+default_generator_lang = "py"
 
 # Each [problem.solution.<lang>] section defines the commands to run for that language.
 # <lang> corresponds to the file extension for that language.
