@@ -1,10 +1,10 @@
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 
-use super::run::{get_cmd, get_output, RunnableFile};
+use super::run::{RunCommand, RunnableFile};
 use super::sync_mappings::get_problem;
 use crate::config::Settings;
 use crate::util::get_project_root;
@@ -29,21 +29,22 @@ pub fn generate(
         );
     }
 
-    let bin_file = problem_path.join("generators/generator.out");
-    let script_file = problem_path.join(format!("{generator}"));
+    let run_command = RunCommand::new(
+        settings,
+        &problem_path,
+        generator,
+        problem_path.join("generators/generator.out"),
+        problem_path.join(format!("{generator}")),
+    )
+    .context("Failed to get generator command")?;
 
-    let run_command = get_cmd(settings, &problem_path, generator, &bin_file)
-        .context("Failed to get generator command")?;
-
-    let (output, _) = get_output(&bin_file, &script_file, &run_command, None)
+    let result = run_command
+        .get_result(None)
         .context("Failed to get generator output")?;
     let mut test_file = File::create(test_path).context("Failed to create test file")?;
-    test_file.write_all(output.as_bytes())?;
+    test_file.write_all(result.output.as_bytes())?;
 
-    // Delete the compiled run files, if it exists
-    if bin_file.exists() {
-        fs::remove_file(bin_file).context("Failed to remove binary file")?;
-    }
+    run_command.cleanup()?;
 
     Ok(())
 }
