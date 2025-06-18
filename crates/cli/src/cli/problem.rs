@@ -1,6 +1,6 @@
 use std::fs;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
@@ -9,7 +9,7 @@ use crate::problem::{
     run::{RunnableCategory, RunnableFile},
     solve, test,
 };
-use crate::util::{get_problem_from_cwd, get_project_root};
+use crate::util::{get_lang_from_extension, get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
     Command::new("problem")
@@ -38,27 +38,15 @@ pub fn cli() -> Command {
         )
         .subcommand(
             Command::new("compare")
-                .about("Compare two solutions")
+                .about("Compare two or more solutions")
                 .args([
                     Arg::new("generate")
                         .long("generate")
                         .help("Generate new test cases until the solutions produce different results")
                         .action(ArgAction::SetTrue),
-                    Arg::new("file1")
-                        .long("file1")
-                        .help("Name of the first solution file")
-                        .action(ArgAction::Set),
-                    Arg::new("lang1")
-                        .long("lang1")
-                        .help("Language of the first solution file (e.g. cpp, py)")
-                        .action(ArgAction::Set),
-                    Arg::new("file2")
-                        .long("file2")
-                        .help("Name of the second solution file")
-                        .action(ArgAction::Set),
-                    Arg::new("lang2")
-                        .long("lang2")
-                        .help("Language of the second solution file (e.g. cpp, py)")
+                    Arg::new("file")
+                        .long("file")
+                        .help("Name of the solution file")
                         .action(ArgAction::Set),
                     Arg::new("generator-file")
                         .long("generator-file")
@@ -189,19 +177,25 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             };
             let generate = (cmd.try_get_one::<bool>("generate")?).unwrap_or(&false);
 
-            let solution_1 = RunnableFile::new(
-                settings,
-                RunnableCategory::Solution,
-                cmd.try_get_one::<String>("file1")?,
-                cmd.try_get_one::<String>("lang1")?,
-            );
+            let files: Vec<&String> = cmd
+                .get_many::<String>("file")
+                .context("At least two solution files are required for comparison")?
+                .collect();
 
-            let solution_2 = RunnableFile::new(
-                settings,
-                RunnableCategory::Solution,
-                cmd.try_get_one::<String>("file2")?,
-                cmd.try_get_one::<String>("lang2")?,
-            );
+            if files.len() < 2 {
+                bail!("At least two solution files are required for comparison");
+            }
+
+            let mut solution_files: Vec<RunnableFile> = Vec::new();
+            for f in files {
+                let solution_file = RunnableFile::new(
+                    settings,
+                    RunnableCategory::Solution,
+                    Some(f),
+                    Some(&get_lang_from_extension(f)?),
+                );
+                solution_files.push(solution_file);
+            }
 
             let generator = RunnableFile::new(
                 settings,
@@ -210,15 +204,14 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 cmd.try_get_one::<String>("generator-lang")?,
             );
 
-            compare::compare(
-                settings,
-                &problems_dir,
-                problem_name,
-                generate,
-                &solution_1,
-                &solution_2,
-                &generator,
-            )?;
+            let compare_args = compare::CompareArgs {
+                problems_dir: &problems_dir,
+                problem_name: problem_name.to_string(),
+                solution_files,
+                generator,
+            };
+
+            compare::compare(settings, generate, &compare_args)?;
         }
         Some(("create", cmd)) => {
             let problem_name = cmd

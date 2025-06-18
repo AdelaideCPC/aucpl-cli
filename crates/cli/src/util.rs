@@ -67,3 +67,13 @@ pub fn is_file_empty<P: AsRef<Path>>(path: P) -> Result<bool> {
     let metadata = fs::metadata(path)?;
     Ok(metadata.len() == 0)
 }
+
+pub fn get_lang_from_extension<P: AsRef<Path>>(path: P) -> Result<String> {
+    let lang = path
+        .as_ref()
+        .extension()
+        .and_then(|s| s.to_str())
+        .context("Failed to get file extension")?
+        .to_string();
+    Ok(lang)
+}

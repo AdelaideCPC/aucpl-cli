@@ -2,48 +2,56 @@ use std::fs;
 use std::path::Path;
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use uuid::Uuid;
 
 use super::generate;
 use super::run::{RunCommand, RunnableFile};
 use super::sync_mappings::get_problem;
-use crate::util::get_project_root;
-use crate::{config::Settings, util::get_input_files_in_directory};
+use crate::config::Settings;
+use crate::problem::run::RunResult;
+use crate::util::{get_input_files_in_directory, get_project_root};
+
+/// Arguments for the compare command.
+pub struct CompareArgs<'a> {
+    pub problems_dir: &'a Path,
+    pub problem_name: String,
+    pub solution_files: Vec<RunnableFile>,
+    pub generator: RunnableFile,
+}
 
 /// Compare two solutions.
-pub fn compare(
-    settings: &Settings,
-    problems_dir: &Path,
-    problem_name: &str,
-    generate: &bool,
-    solution_1: &RunnableFile,
-    solution_2: &RunnableFile,
-    generator: &RunnableFile,
-) -> Result<()> {
+pub fn compare(settings: &Settings, generate: &bool, compare_args: &CompareArgs) -> Result<()> {
     let project_root = get_project_root()?;
+    let CompareArgs {
+        problems_dir,
+        problem_name,
+        generator,
+        solution_files,
+    } = compare_args;
     let problem_path = project_root.join(get_problem(problems_dir, problem_name)?);
 
-    let run_command_1 = RunCommand::new(
-        settings,
-        &problem_path,
-        solution_1,
-        problem_path.join("solutions/solution_1.out"),
-        problem_path.join(format!("{solution_1}")),
-    )?;
-    let run_command_2 = RunCommand::new(
-        settings,
-        &problem_path,
-        solution_2,
-        problem_path.join("solutions/solution_2.out"),
-        problem_path.join(format!("{solution_2}")),
-    )?;
+    let mut run_commands: Vec<RunCommand> = Vec::new();
+    for (i, file) in solution_files.iter().enumerate() {
+        run_commands.push(RunCommand::new(
+            settings,
+            &problem_path,
+            file,
+            problem_path.join(format!("solutions/solution_{i}.out")),
+            problem_path.join(format!("{file}")),
+        )?);
+    }
+
+    // If there aren't at least two solutions, we can't compare so return an error
+    if run_commands.len() < 2 {
+        bail!("At least two solutions are required to compare.");
+    }
 
     if *generate {
         let mut total_tests = 0;
-        let mut total_time_1: f64 = 0f64;
-        let mut total_time_2: f64 = 0f64;
+        let mut total_times: Vec<Duration> = vec![Duration::new(0, 0); run_commands.len()];
 
+        // TODO: Set an optional limit?
         loop {
             total_tests += 1;
 
@@ -54,84 +62,124 @@ pub fn compare(
 
             let input_file_path = problem_path.join(format!("tests/{}.in", test_name));
 
-            let result_1 = run_command_1
-                .get_result(Some(&input_file_path))
-                .context("Failed to get output from solution 1")?;
-            let result_2 = run_command_2
-                .get_result(Some(&input_file_path))
-                .context("Failed to get output from solution 2")?;
-
-            if result_1.output.as_bytes() != result_2.output.as_bytes() {
-                eprintln!(
-                    "  ! Test case {total_tests} (tests/generated.in) failed, time taken: {:.5}s and {:.5}s respectively",
-                    result_1.elapsed_time.as_secs_f64(),
-                    result_2.elapsed_time.as_secs_f64()
-                );
-                break;
-            } else {
-                eprintln!(
-                    "  + Test case {total_tests} passed, time taken: {:.5}s and {:.5}s respectively",
-                    result_1.elapsed_time.as_secs_f64(),
-                    result_2.elapsed_time.as_secs_f64()
-                );
-                eprintln!(
-                    "    Total percentage time difference: {:.5}%",
-                    (total_time_2 - total_time_1) * 100f64 / total_time_1
-                );
-                fs::remove_file(input_file_path).context("Failed to delete generated test case")?;
+            let mut results: Vec<RunResult> = Vec::new();
+            for (i, run_cmd) in run_commands.iter().enumerate() {
+                let result = run_cmd
+                    .get_result(Some(&input_file_path))
+                    .context(format!("Failed to get output from solution {i}"))?;
+                results.push(result);
             }
 
-            total_time_1 += result_1.elapsed_time.as_secs_f64();
-            total_time_2 += result_2.elapsed_time.as_secs_f64();
+            let mut passed = true;
+            let mut avg_duration = Duration::new(0, 0);
+            // We verify earlier that there is at least two solutions so indexing 0 is no issue
+            let result_1 = &results[0];
+            for (i, result) in results.iter().enumerate().skip(1) {
+                // TODO: compare 1st, 2nd and nth result for a "best of three" (if applicable)?
+                if result_1.output.as_bytes() != result.output.as_bytes() {
+                    eprintln!(
+                        "  ! Test case {total_tests} (tests/generated.in) failed, solution 1 took {:.5}s, solution {i} took {:.5}s",
+                        result_1.elapsed_time.as_secs_f64(),
+                        result.elapsed_time.as_secs_f64()
+                    );
+                    passed = false;
+                    break;
+                }
+                avg_duration += result.elapsed_time;
+            }
+
+            if passed {
+                let max_total_time = total_times
+                    .iter()
+                    .max()
+                    .unwrap_or(&Duration::new(0, 0))
+                    .to_owned();
+                let min_total_time = total_times
+                    .iter()
+                    .min()
+                    .unwrap_or(&Duration::new(0, 0))
+                    .to_owned();
+
+                eprintln!(
+                    "  + Test case {total_tests} passed, average time taken: {:.5}s",
+                    avg_duration.as_secs_f64() / (results.len() as f64)
+                );
+                eprintln!(
+                    "    Total percentage time difference (min, max times): {:.5}%",
+                    (max_total_time.abs_diff(min_total_time)).as_secs_f64() * 100f64
+                        / min_total_time.as_secs_f64()
+                );
+
+                fs::remove_file(input_file_path).context("Failed to delete generated test case")?;
+            } else {
+                break;
+            }
+
+            for (i, result) in results.iter().enumerate() {
+                total_times[i] += result.elapsed_time;
+            }
         }
     } else {
         let test_files = get_input_files_in_directory(problem_path.join("tests"))?;
 
         let mut tests_passed = 0;
         let mut total_tests = 0;
-        let mut total_time_1: Duration = Duration::new(0, 0);
-        let mut total_time_2: Duration = Duration::new(0, 0);
+        let mut total_times: Vec<Duration> = vec![Duration::new(0, 0); run_commands.len()];
 
         eprintln!("Running the solution files for each test case...");
 
         for test_file in test_files {
             let input_file_path = problem_path.join(format!("tests/{}", test_file));
 
-            let result_1 = run_command_1
-                .get_result(Some(&input_file_path))
-                .context("Failed to get output from solution 1")?;
-            let result_2 = run_command_2
-                .get_result(Some(&input_file_path))
-                .context("Failed to get output from solution 2")?;
+            let mut results: Vec<RunResult> = Vec::new();
+            for (i, run_cmd) in run_commands.iter().enumerate() {
+                let result = run_cmd
+                    .get_result(Some(&input_file_path))
+                    .context(format!("Failed to get output from solution {i}"))?;
+                results.push(result);
+            }
 
-            if result_1.output.as_bytes() != result_2.output.as_bytes() {
+            let mut passed = true;
+            let mut avg_duration = Duration::new(0, 0);
+            // We verify earlier that there is at least two solutions so indexing 0 is no issue
+            let result_1 = &results[0];
+            for (i, result) in results.iter().enumerate().skip(1) {
+                // TODO: compare 1st, 2nd and nth result for a "best of three" (if applicable)?
+                if result_1.output.as_bytes() != result.output.as_bytes() {
+                    eprintln!(
+                        "  ! Test case failed: {test_file}, solution 1 took {:.5}s, solution {i} took {:.5}s",
+                        result_1.elapsed_time.as_secs_f64(),
+                        result.elapsed_time.as_secs_f64()
+                    );
+                    passed = false;
+                    break;
+                }
+                avg_duration += result.elapsed_time;
+            }
+
+            if passed {
                 eprintln!(
-                    "  ! Test case failed: {test_file}, time taken: {:.5}s and {:.5}s respectively",
-                    result_1.elapsed_time.as_secs_f64(),
-                    result_2.elapsed_time.as_secs_f64()
-                );
-            } else {
-                eprintln!(
-                    "  + Test case passed: {test_file}, time taken: {:.5}s and {:.5}s respectively",
-                    result_1.elapsed_time.as_secs_f64(),
-                    result_2.elapsed_time.as_secs_f64()
+                    "  + Test case passed: {test_file}, average time taken: {:.5}s",
+                    avg_duration.as_secs_f64() / (results.len() as f64)
                 );
                 tests_passed += 1;
             }
+
             total_tests += 1;
-            total_time_1 += result_1.elapsed_time;
-            total_time_2 += result_2.elapsed_time;
+            for (i, result) in results.iter().enumerate() {
+                total_times[i] += result.elapsed_time;
+            }
         }
 
-        eprintln!(
-            "{tests_passed} out of {total_tests} test cases passed, time taken: {:.5}s and {:.5}s respectively.",
-            total_time_1.as_secs_f64(),
-            total_time_2.as_secs_f64()
-        );
+        eprintln!("{tests_passed} out of {total_tests} test cases passed");
+        for (i, time) in total_times.iter().enumerate() {
+            eprintln!(" Time taken for solution {i}: {:.5}s", time.as_secs_f64());
+        }
     }
 
-    run_command_1.cleanup()?;
-    run_command_2.cleanup()?;
+    for run_command in run_commands {
+        run_command.cleanup()?;
+    }
 
     Ok(())
 }

@@ -62,6 +62,9 @@ impl fmt::Display for RunnableFile {
 }
 
 /// Represents a command to run a solution or generator file.
+// TODO: Technically it wouldn't really be correct to have a "script_file"
+// if the file is only compiled, so we should probably make bin_file and
+// script_file mutually exclusive
 pub struct RunCommand {
     bin_file: PathBuf,
     script_file: PathBuf,
