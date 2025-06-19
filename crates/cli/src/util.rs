@@ -21,7 +21,11 @@ pub fn get_project_root() -> Result<PathBuf> {
 /// Get the name of the problem from the current working directory if the
 /// directory is a valid problem folder.
 pub fn get_problem_from_cwd(problems_dir: &Path) -> Result<String> {
+    let project_root = get_project_root()?;
     let path = std::env::current_dir()?;
+    if project_root == path {
+        bail!("You are in the project root directory. Please navigate to a problem directory");
+    }
     let problem_name = path
         .file_name()
         .context("Failed to get problem name")?
