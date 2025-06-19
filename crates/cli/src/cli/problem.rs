@@ -4,6 +4,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
+use crate::problem::fuzz;
 use crate::problem::{
     archive, check, compare, create, generate,
     run::{RunnableCategory, RunnableFile},
@@ -40,21 +41,9 @@ pub fn cli() -> Command {
             Command::new("compare")
                 .about("Compare two or more solutions")
                 .args([
-                    Arg::new("generate")
-                        .long("generate")
-                        .help("Generate new test cases until the solutions produce different results")
-                        .action(ArgAction::SetTrue),
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
-                        .action(ArgAction::Set),
-                    Arg::new("generator-file")
-                        .long("generator-file")
-                        .help("Name of the generator file")
-                        .action(ArgAction::Set),
-                    Arg::new("generator-lang")
-                        .long("generator-lang")
-                        .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
@@ -80,6 +69,29 @@ pub fn cli() -> Command {
                         .action(ArgAction::Set)
                         .required(true),
                 ),
+        )
+        .subcommand(
+            Command::new("fuzz")
+                .about("Find potential edge cases in two or more solutions")
+                .args([
+                    Arg::new("file")
+                        .long("file")
+                        .help("Name of the solution file")
+                        .action(ArgAction::Set),
+                    Arg::new("generator-file")
+                        .long("generator-file")
+                        .help("Name of the generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("generator-lang")
+                        .long("generator-lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
+                        .action(ArgAction::Set),
+                ]),
         )
         .subcommand(
             Command::new("generate")
@@ -175,15 +187,59 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 Some(name) => name,
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
-            let generate = (cmd.try_get_one::<bool>("generate")?).unwrap_or(&false);
 
             let files: Vec<&String> = cmd
-                .get_many::<String>("file")
+                .try_get_many::<String>("file")?
                 .context("At least two solution files are required for comparison")?
                 .collect();
 
             if files.len() < 2 {
                 bail!("At least two solution files are required for comparison");
+            }
+
+            let mut solution_files: Vec<RunnableFile> = Vec::new();
+            for f in files {
+                let solution_file = RunnableFile::new(
+                    settings,
+                    RunnableCategory::Solution,
+                    Some(f),
+                    Some(&get_lang_from_extension(f)?),
+                );
+                solution_files.push(solution_file);
+            }
+
+            let compare_args = compare::CompareArgs {
+                problems_dir: &problems_dir,
+                problem_name: problem_name.to_string(),
+                solution_files,
+            };
+
+            compare::compare(settings, &compare_args)?;
+        }
+        Some(("create", cmd)) => {
+            let problem_name = cmd
+                .try_get_one::<String>("name")?
+                .context("Problem name is required")?;
+
+            let difficulty = cmd
+                .try_get_one::<u16>("difficulty")?
+                .context("Problem difficulty is required")?;
+
+            create::create(&problems_dir, problem_name, *difficulty)?;
+        }
+        Some(("fuzz", cmd)) => {
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
+
+            let files: Vec<&String> = cmd
+                .try_get_many::<String>("file")?
+                .context("At least two solution files are required for fuzzing")?
+                .collect();
+
+            if files.len() < 2 {
+                bail!("At least two solution files are required for fuzzing");
             }
 
             let mut solution_files: Vec<RunnableFile> = Vec::new();
@@ -204,25 +260,14 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 cmd.try_get_one::<String>("generator-lang")?,
             );
 
-            let compare_args = compare::CompareArgs {
+            let fuzz_args = fuzz::FuzzArgs {
                 problems_dir: &problems_dir,
                 problem_name: problem_name.to_string(),
                 solution_files,
                 generator,
             };
 
-            compare::compare(settings, generate, &compare_args)?;
-        }
-        Some(("create", cmd)) => {
-            let problem_name = cmd
-                .try_get_one::<String>("name")?
-                .context("Problem name is required")?;
-
-            let difficulty = cmd
-                .try_get_one::<u16>("difficulty")?
-                .context("Problem difficulty is required")?;
-
-            create::create(&problems_dir, problem_name, *difficulty)?;
+            fuzz::fuzz(settings, &fuzz_args)?;
         }
         Some(("generate", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {
