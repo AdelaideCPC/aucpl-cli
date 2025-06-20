@@ -69,7 +69,7 @@ pub fn compare(settings: &Settings, compare_args: &CompareArgs) -> Result<()> {
             // TODO: compare 1st, 2nd and nth result for a "best of three" (if applicable)?
             if result_1.output.as_bytes() != result.output.as_bytes() {
                 eprintln!(
-                        "  ! Test case failed: {test_file}, solution 1 took {:.5}s, solution {i} took {:.5}s",
+                        "  ! Test case failed: {test_file}, solution 0 took {:.5}s, solution {i} took {:.5}s",
                         result_1.elapsed_time.as_secs_f64(),
                         result.elapsed_time.as_secs_f64()
                     );
