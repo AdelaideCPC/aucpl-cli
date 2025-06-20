@@ -5,12 +5,9 @@ use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::Settings;
 use crate::problem::fuzz;
-use crate::problem::{
-    archive, check, compare, create, generate,
-    run::{RunnableCategory, RunnableFile},
-    solve, test,
-};
-use crate::util::{get_lang_from_extension, get_problem_from_cwd, get_project_root};
+use crate::problem::run::{RunnableCategory, RunnableFile};
+use crate::problem::{archive, check, compare, create, generate, solve, test};
+use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
     Command::new("problem")
@@ -44,7 +41,7 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
-                        .action(ArgAction::Set),
+                        .action(ArgAction::Append),
                     Arg::new("problem")
                         .short('p')
                         .long("problem")
@@ -77,14 +74,10 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
-                        .action(ArgAction::Set),
+                        .action(ArgAction::Append),
                     Arg::new("generator-file")
                         .long("generator-file")
                         .help("Name of the generator file")
-                        .action(ArgAction::Set),
-                    Arg::new("generator-lang")
-                        .long("generator-lang")
-                        .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
@@ -100,10 +93,6 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the generator file")
-                        .action(ArgAction::Set),
-                    Arg::new("lang")
-                        .long("lang")
-                        .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
@@ -199,13 +188,9 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
 
             let mut solution_files: Vec<RunnableFile> = Vec::new();
             for f in files {
-                let solution_file = RunnableFile::new(
-                    settings,
-                    RunnableCategory::Solution,
-                    Some(f),
-                    Some(&get_lang_from_extension(f)?),
-                );
-                solution_files.push(solution_file);
+                let solution_file =
+                    RunnableFile::new(settings, RunnableCategory::Solution, Some(f));
+                solution_files.push(solution_file?);
             }
 
             let compare_args = compare::CompareArgs {
@@ -244,21 +229,16 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
 
             let mut solution_files: Vec<RunnableFile> = Vec::new();
             for f in files {
-                let solution_file = RunnableFile::new(
-                    settings,
-                    RunnableCategory::Solution,
-                    Some(f),
-                    Some(&get_lang_from_extension(f)?),
-                );
-                solution_files.push(solution_file);
+                let solution_file =
+                    RunnableFile::new(settings, RunnableCategory::Solution, Some(f));
+                solution_files.push(solution_file?);
             }
 
             let generator = RunnableFile::new(
                 settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("generator-file")?,
-                cmd.try_get_one::<String>("generator-lang")?,
-            );
+            )?;
 
             let fuzz_args = fuzz::FuzzArgs {
                 problems_dir: &problems_dir,
@@ -279,8 +259,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("file")?,
-                cmd.try_get_one::<String>("lang")?,
-            );
+            )?;
 
             let test_name = cmd
                 .try_get_one::<String>("test-name")?

@@ -1,13 +1,15 @@
-use anyhow::{bail, Context, Result};
-use normpath::PathExt;
 use std::ffi::OsStr;
 use std::fmt;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
+
+use anyhow::{bail, Context, Result};
+use normpath::PathExt;
 use subprocess::{Exec, Redirection};
 
 use crate::config::Settings;
+use crate::util::get_lang_from_extension;
 
 /// Represents the category of a runnable file, either a solution or a generator.
 #[derive(Eq, PartialEq)]
@@ -26,38 +28,48 @@ impl fmt::Display for RunnableCategory {
 }
 
 /// Represents a runnable file, which can be either a solution or a generator.
+/// The file must not be a binary file, and is expected to be a script or a
+/// source code file
 pub struct RunnableFile {
-    pub category: RunnableCategory,
-    pub name: String,
-    pub lang: String,
+    category: RunnableCategory,
+    name: String,
+    lang: String,
 }
 
 impl RunnableFile {
-    /// Sets the name and language if given, otherwise defaults to the category name
-    /// and the default language from the settings.
+    /// Sets the file name if given, and infers the language from the file
+    /// extension. Otherwise defaults to the category name and the default
+    /// language from the settings.
     pub fn new(
         settings: &Settings,
         category: RunnableCategory,
         name: Option<&String>,
-        lang: Option<&String>,
-    ) -> Self {
-        Self {
-            name: name.cloned().unwrap_or(format!("{category}")),
-            lang: lang
-                .cloned()
-                .unwrap_or(if category == RunnableCategory::Solution {
-                    settings.problem.default_lang.clone()
-                } else {
-                    settings.problem.default_generator_lang.clone()
-                }),
-            category,
+    ) -> Result<Self> {
+        let lang: String;
+        let filename: String;
+        if name.is_none() {
+            lang = match category {
+                RunnableCategory::Solution => settings.problem.default_lang.clone(),
+                RunnableCategory::Generator => settings.problem.default_generator_lang.clone(),
+            };
+            filename = format!("{category}.{lang}");
+        } else {
+            lang =
+                get_lang_from_extension(name.context("Failed to get filename of runnable file")?)?;
+            filename = name.unwrap().to_string();
         }
+
+        Ok(Self {
+            name: filename,
+            lang,
+            category,
+        })
     }
 }
 
 impl fmt::Display for RunnableFile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}s/{}.{}", self.category, self.name, self.lang)
+        write!(f, "{}s/{}", self.category, self.name)
     }
 }
 
