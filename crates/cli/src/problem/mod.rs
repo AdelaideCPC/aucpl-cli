@@ -4,6 +4,7 @@ pub mod archive;
 pub mod check;
 pub mod compare;
 pub mod create;
+pub mod fuzz;
 pub mod generate;
 pub mod run;
 pub mod solve;
