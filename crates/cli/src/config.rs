@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::env;
+use std::fs;
 
-use anyhow::{bail, Result};
-use config::{Config, ConfigError, File};
+use anyhow::{bail, Context, Result};
+use config::{Config, ConfigError, File, FileFormat};
 use serde::Deserialize;
 
 use crate::util::get_project_root;
@@ -62,12 +64,26 @@ impl Settings {
             Some(name) => project_root.join(name),
             None => project_root.join(SETTINGS_FILE_NAME),
         };
+        if !settings_path.exists() {
+            eprintln!(
+                "Settings file not found at '{}'. A new settings file will be generated",
+                settings_path.display()
+            );
+            create_settings_file().map_err(|err| {
+                ConfigError::Message(format!("Failed to create settings file: {err}"))
+            })?;
+        }
 
         let settings_path_str = settings_path.to_str().ok_or_else(|| {
             ConfigError::Message("Could not get path of settings file".to_string())
         })?;
 
+        // Load defaults first, then have settings file override them
         let s = Config::builder()
+            .add_source(File::from_str(
+                SETTINGS_FILE_DEFAULT_CONTENTS,
+                FileFormat::Toml,
+            ))
             .add_source(File::with_name(settings_path_str))
             .build()?;
 
@@ -92,4 +108,22 @@ pub fn get_settings() -> Result<Settings> {
     }
 
     Ok(settings)
+}
+
+/// Create a new settings file with default contents if it does not already exist.
+pub fn create_settings_file() -> Result<()> {
+    let project_root = env::current_dir().context("Failed to get current directory")?;
+    let settings_path = project_root.join(SETTINGS_FILE_NAME);
+
+    if settings_path.exists() {
+        bail!(
+            "Settings file already exists at '{}'",
+            settings_path.display()
+        );
+    }
+    fs::write(&settings_path, SETTINGS_FILE_DEFAULT_CONTENTS)
+        .context("Could not create settings file")?;
+
+    eprintln!("Created settings file at '{}'", settings_path.display());
+    Ok(())
 }
