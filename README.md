@@ -12,7 +12,7 @@ A helpful command-line interface for AUCPL problem setters.
 - Easily switch between languages when testing solutions
 - Check/validate problems to ensure things are correct (e.g. no missing test cases)
 - Easy management and organisation of problems and competitions with options to create, rename, archive, and more
-- Generate test cases from generator scripts
+- Generate input test cases from generator scripts
 - Compare the outputs of two or more solutions
 - Fuzz solutions to see if there are any bugs or unhandled edge cases
 
@@ -96,5 +96,6 @@ Competitions
 
 Other
 
+- `aucpl init`: Create a new project
 - `aucpl help`: Show help
 - `aucpl sync`: Generate or update the problem mappings file

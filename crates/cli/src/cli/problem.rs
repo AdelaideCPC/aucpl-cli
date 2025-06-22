@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::{anyhow, bail, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
-use crate::config::Settings;
+use crate::config::get_settings;
 use crate::problem::fuzz;
 use crate::problem::run::{RunnableCategory, RunnableFile};
 use crate::problem::{archive, check, compare, create, generate, solve, test};
@@ -146,7 +146,8 @@ pub fn cli() -> Command {
         .subcommand_required(true)
 }
 
-pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
+pub fn exec(args: &ArgMatches) -> Result<()> {
+    let settings = get_settings()?;
     let problems_dir = get_project_root()?.join(&settings.problems_dir);
     if !fs::exists(&problems_dir).expect("Failed to check if path exists") {
         fs::create_dir(&problems_dir).expect("Failed to create directory");
@@ -189,7 +190,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             let mut solution_files: Vec<RunnableFile> = Vec::new();
             for f in files {
                 let solution_file =
-                    RunnableFile::new(settings, RunnableCategory::Solution, Some(f));
+                    RunnableFile::new(&settings, RunnableCategory::Solution, Some(f));
                 solution_files.push(solution_file?);
             }
 
@@ -199,7 +200,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 solution_files,
             };
 
-            compare::compare(settings, &compare_args)?;
+            compare::compare(&settings, &compare_args)?;
         }
         Some(("create", cmd)) => {
             let problem_name = cmd
@@ -230,12 +231,12 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             let mut solution_files: Vec<RunnableFile> = Vec::new();
             for f in files {
                 let solution_file =
-                    RunnableFile::new(settings, RunnableCategory::Solution, Some(f));
+                    RunnableFile::new(&settings, RunnableCategory::Solution, Some(f));
                 solution_files.push(solution_file?);
             }
 
             let generator = RunnableFile::new(
-                settings,
+                &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("generator-file")?,
             )?;
@@ -247,7 +248,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 generator,
             };
 
-            fuzz::fuzz(settings, &fuzz_args)?;
+            fuzz::fuzz(&settings, &fuzz_args)?;
         }
         Some(("generate", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {
@@ -256,7 +257,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             };
 
             let generator = RunnableFile::new(
-                settings,
+                &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("file")?,
             )?;
@@ -266,7 +267,13 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .map(|f| f.as_str())
                 .unwrap_or("generated");
 
-            generate::generate(settings, &problems_dir, problem_name, &generator, test_name)?;
+            generate::generate(
+                &settings,
+                &problems_dir,
+                problem_name,
+                &generator,
+                test_name,
+            )?;
         }
         Some(("solve", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {
@@ -278,7 +285,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             let solution_lang = cmd.try_get_one::<String>("lang")?;
 
             solve::solve(
-                settings,
+                &settings,
                 &problems_dir,
                 problem_name,
                 solution_file,
@@ -295,7 +302,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
             let solution_lang = cmd.try_get_one::<String>("lang")?;
 
             test::test(
-                settings,
+                &settings,
                 &problems_dir,
                 problem_name,
                 solution_file,

@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
 use crate::comp::{add, create, finish, list, remove, rename, solve, test};
-use crate::config::Settings;
+use crate::config::get_settings;
 use crate::util::get_project_root;
 
 pub fn cli() -> Command {
@@ -126,7 +126,8 @@ pub fn cli() -> Command {
         .subcommand_required(true)
 }
 
-pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
+pub fn exec(args: &ArgMatches) -> Result<()> {
+    let settings = get_settings()?;
     let problems_dir = get_project_root()?.join(&settings.problems_dir);
     if !fs::exists(&problems_dir).expect("Failed to check if path exists") {
         fs::create_dir(&problems_dir).expect("Failed to create directory");
@@ -188,7 +189,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Competition name is required")?;
             let solution_lang = cmd.try_get_one::<String>("lang")?;
 
-            solve::solve(settings, &problems_dir, comp_name, solution_lang)?;
+            solve::solve(&settings, &problems_dir, comp_name, solution_lang)?;
         }
         Some(("test", cmd)) => {
             let comp_name = cmd
@@ -196,7 +197,7 @@ pub fn exec(args: &ArgMatches, settings: &Settings) -> Result<()> {
                 .context("Competition name is required")?;
             let solution_lang = cmd.try_get_one::<String>("lang")?;
 
-            test::test(settings, &problems_dir, comp_name, solution_lang)?;
+            test::test(&settings, &problems_dir, comp_name, solution_lang)?;
         }
         _ => {}
     }

@@ -1,7 +1,5 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Command;
-
-use crate::config::SETTINGS_FILE_VERSION;
 
 mod cli;
 mod comp;
@@ -35,25 +33,12 @@ fn main() -> Result<()> {
 
     let matches = cli.get_matches();
 
-    let settings = match config::Settings::new(None) {
-        Ok(s) => s,
-        Err(error) => bail!(
-            "Failed to parse settings file: {error:?}\nMake sure that the settings file is up to date with the latest version (v{SETTINGS_FILE_VERSION})"
-        ),
-    };
-
-    if settings.version != SETTINGS_FILE_VERSION {
-        bail!(
-            "The settings file version does not match! Expected '{SETTINGS_FILE_VERSION}', got '{}'",
-            settings.version
-        );
-    }
-
     match matches.subcommand() {
-        Some(("comp", cmd)) => cli::comp::exec(cmd, &settings)?,
-        Some(("problem", cmd)) => cli::problem::exec(cmd, &settings)?,
-        Some(("publish", cmd)) => cli::publish::exec(cmd, &settings)?,
-        Some(("sync", cmd)) => cli::sync::exec(cmd, &settings)?,
+        Some(("comp", cmd)) => cli::comp::exec(cmd)?,
+        Some(("init", cmd)) => cli::init::exec(cmd)?,
+        Some(("problem", cmd)) => cli::problem::exec(cmd)?,
+        Some(("publish", cmd)) => cli::publish::exec(cmd)?,
+        Some(("sync", cmd)) => cli::sync::exec(cmd)?,
         _ => unreachable!(),
     }
 

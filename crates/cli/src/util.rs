@@ -3,15 +3,15 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 
-use crate::config::SETTINGS_FILE;
+use crate::config::SETTINGS_FILE_NAME;
 use crate::problem::sync_mappings::problem_exists;
 
 /// Figure out the root directory of the AUCPL problemset project.
 pub fn get_project_root() -> Result<PathBuf> {
     let mut path = std::env::current_dir()?;
-    while !path.join(SETTINGS_FILE).exists() {
+    while !path.join(SETTINGS_FILE_NAME).exists() {
         if !path.pop() {
-            bail!("Could not find the project root: {SETTINGS_FILE} not found");
+            bail!("Could not find the project root: {SETTINGS_FILE_NAME} not found");
         }
     }
 
