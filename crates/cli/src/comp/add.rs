@@ -30,6 +30,10 @@ pub fn add(problems_dir: &Path, comp_name: &str, problem_name: &str) -> Result<(
         return Ok(());
     }
 
+    if comp_data.problems.contains(&problem_name.to_string()) {
+        eprintln!("The problem '{problem_name}' already exists in the competition");
+        return Ok(());
+    }
     comp_data.problems.push(problem_name.to_string());
     comp_data.problems.sort_unstable();
 
