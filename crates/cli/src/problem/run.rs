@@ -97,7 +97,7 @@ impl RunCommand {
         bin_file: PathBuf,
         script_file: PathBuf,
     ) -> Result<Self> {
-        let mut file_path = problem.join(format!("{}", file));
+        let mut file_path = problem.join(format!("{file}"));
         file_path = file_path
             .normalize()
             .context(format!(

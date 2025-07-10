@@ -25,7 +25,7 @@ pub fn test(
     let problem = project_root.join(get_problem(problems_dir, problem_name)?);
 
     let solution_lang = solution_lang.unwrap_or(&settings.problem.default_lang);
-    let mut solution_file = problem.join(format!("solutions/solution.{}", solution_lang));
+    let mut solution_file = problem.join(format!("solutions/solution.{solution_lang}"));
     if solution_file_name.is_some() {
         solution_file = problem.join(format!(
             "solutions/{}",
@@ -41,7 +41,7 @@ pub fn test(
     eprintln!("Using solution file at: {}", solution_file.display());
 
     let bin_file = problem.join("solutions/solution.out");
-    let script_file = problem.join(format!("solutions/solution.{}", solution_lang));
+    let script_file = problem.join(format!("solutions/solution.{solution_lang}"));
 
     let lang_settings = settings
         .problem
@@ -91,7 +91,7 @@ pub fn test(
     let mut total_time: Duration = Duration::new(0, 0);
 
     for test_file in test_files {
-        let input_file_path = problem.join(format!("tests/{}", test_file));
+        let input_file_path = problem.join(format!("tests/{test_file}"));
         let output_file_path = problem.join(format!(
             "tests/{}.out",
             test_file

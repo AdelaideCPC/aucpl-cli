@@ -28,7 +28,7 @@ pub fn create(problems_dir: &Path, problem_name: &str, difficulty: u16) -> Resul
     let difficulty_str = if difficulty == 0 {
         "unrated".to_string()
     } else {
-        format!("{:0>4}", bucketed_difficulty)
+        format!("{bucketed_difficulty:0>4}")
     };
     let re = Regex::new(PROBLEM_NAME_REGEX_PATTERN)?;
     if !re.is_match(problem_name) {

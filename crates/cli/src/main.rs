@@ -15,11 +15,9 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const ABOUT: &str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() -> Result<()> {
-    let about_text = format!("{} {}\n{}", NAME, VERSION, ABOUT);
-    let after_help_text = format!(
-        "See '{} help <command>' for more information on a command",
-        BIN_NAME
-    );
+    let about_text = format!("{NAME} {VERSION}\n{ABOUT}");
+    let after_help_text =
+        format!("See '{BIN_NAME} help <command>' for more information on a command");
 
     let cli = Command::new(NAME)
         .bin_name(BIN_NAME)
