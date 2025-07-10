@@ -92,6 +92,7 @@ dependencies = [
  "clap",
  "config",
  "normpath",
+ "numeric-sort",
  "regex",
  "serde",
  "serde_json",
@@ -408,6 +409,12 @@ checksum = "c8911957c4b1549ac0dc74e30db9c8b0e66ddcd6d7acc33098f4c63a64a6d7ed"
 dependencies = [
  "windows-sys",
 ]
+
+[[package]]
+name = "numeric-sort"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2dcb6053ab98da45585315f79932c5c9821fab8efa4301c0d7b637c91630eb7"
 
 [[package]]
 name = "once_cell"

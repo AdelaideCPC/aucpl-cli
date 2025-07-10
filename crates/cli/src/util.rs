@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
+use numeric_sort::sort_unstable;
 
 use crate::config::SETTINGS_FILE_NAME;
 use crate::problem::sync_mappings::problem_exists;
@@ -60,10 +61,11 @@ pub fn get_files_in_directory<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
 }
 
 pub fn get_input_files_in_directory<P: AsRef<Path>>(path: P) -> Result<Vec<String>> {
-    let files = get_files_in_directory(path)?
+    let mut files: Vec<_> = get_files_in_directory(path)?
         .into_iter()
         .filter(|name| name.ends_with(".in"))
         .collect();
+    sort_unstable(&mut files);
     Ok(files)
 }
 
