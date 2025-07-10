@@ -51,7 +51,7 @@ pub fn compare(settings: &Settings, compare_args: &CompareArgs) -> Result<()> {
     eprintln!("Running the solution files for each test case...");
 
     for test_file in test_files {
-        let input_file_path = problem_path.join(format!("tests/{}", test_file));
+        let input_file_path = problem_path.join(format!("tests/{test_file}"));
 
         let mut results: Vec<RunResult> = Vec::new();
         for (i, run_cmd) in run_commands.iter().enumerate() {

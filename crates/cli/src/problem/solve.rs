@@ -22,7 +22,7 @@ pub fn solve(
     let problem = project_root.join(get_problem(problems_dir, problem_name)?);
 
     let solution_lang = solution_lang.unwrap_or(&settings.problem.default_lang);
-    let mut solution_file = problem.join(format!("solutions/solution.{}", solution_lang));
+    let mut solution_file = problem.join(format!("solutions/solution.{solution_lang}"));
     if solution_file_name.is_some() {
         solution_file = problem.join(format!(
             "solutions/{}",
@@ -38,7 +38,7 @@ pub fn solve(
     eprintln!("Using solution file at: {}", solution_file.display());
 
     let bin_file = problem.join("solutions/solution.out");
-    let script_file = problem.join(format!("solutions/solution.{}", solution_lang));
+    let script_file = problem.join(format!("solutions/solution.{solution_lang}"));
 
     let lang_settings = settings
         .problem
@@ -84,7 +84,7 @@ pub fn solve(
     eprintln!("Running the solution file for each test case...");
     // Run the file for every test input and generate the corresponding output
     for test_file in test_files {
-        let input_file_path = problem.join(format!("tests/{}", test_file));
+        let input_file_path = problem.join(format!("tests/{test_file}"));
         let output_file_path = problem.join(format!(
             "tests/{}.out",
             test_file
@@ -114,7 +114,7 @@ pub fn solve(
 
         final_cmd = final_cmd.stdin(input_file).stdout(output_file);
         final_cmd.capture()?;
-        eprintln!("  - generated output for test file: {}", test_file);
+        eprintln!("  - generated output for test file: {test_file}");
     }
     eprintln!("Finished generating outputs for all test cases");
 

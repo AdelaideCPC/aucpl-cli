@@ -58,7 +58,7 @@ pub fn check(problems_dir: PathBuf, problem_name: &str) -> Result<()> {
     if !exists {
         bail!("The folder structure is not valid! Missing file {file}");
     }
-    eprintln!("Folder structure for '{}' is valid", problem_name);
+    eprintln!("Folder structure for '{problem_name}' is valid");
 
     // Check that test files are valid, i.e.:
     // - A .in file must have a corresponding .out file

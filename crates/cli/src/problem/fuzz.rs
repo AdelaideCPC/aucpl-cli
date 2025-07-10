@@ -56,7 +56,7 @@ pub fn fuzz(settings: &Settings, fuzz_args: &FuzzArgs) -> Result<()> {
         generate::generate(settings, problems_dir, problem_name, generator, &test_name)
             .context("Failed to generate test case")?;
 
-        let input_file_path = problem_path.join(format!("tests/{}.in", test_name));
+        let input_file_path = problem_path.join(format!("tests/{test_name}.in"));
 
         let mut results: Vec<RunResult> = Vec::new();
         for (i, run_cmd) in run_commands.iter().enumerate() {
