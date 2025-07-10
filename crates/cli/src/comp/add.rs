@@ -31,6 +31,7 @@ pub fn add(problems_dir: &Path, comp_name: &str, problem_name: &str) -> Result<(
     }
 
     comp_data.problems.push(problem_name.to_string());
+    comp_data.problems.sort_unstable();
 
     let comp_file = File::options()
         .write(true)
