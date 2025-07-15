@@ -5,6 +5,7 @@ use anyhow::{bail, Context, Result};
 use serde_json::from_reader;
 
 use crate::config::Settings;
+use crate::problem::run::RunnableFile;
 use crate::problem::solve::solve as problem_solve;
 
 use super::{Competitions, COMPETITIONS_FILE};
@@ -13,7 +14,7 @@ pub fn solve(
     settings: &Settings,
     problems_dir: &Path,
     comp_name: &str,
-    solution_lang: Option<&String>,
+    solution_file: RunnableFile,
 ) -> Result<()> {
     let comp_file_path = problems_dir.join(COMPETITIONS_FILE);
     if !fs::exists(&comp_file_path)? {
@@ -34,8 +35,7 @@ pub fn solve(
             settings,
             problems_dir,
             problem_name.as_str(),
-            None,
-            solution_lang,
+            &solution_file,
         )?;
     }
 

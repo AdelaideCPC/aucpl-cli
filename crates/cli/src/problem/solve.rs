@@ -5,7 +5,7 @@ use std::path::Path;
 use anyhow::{Context, Result};
 
 use super::sync_mappings::get_problem;
-use crate::problem::run::{RunCommand, RunnableCategory, RunnableFile};
+use crate::problem::run::{RunCommand, RunnableFile};
 use crate::util::get_project_root;
 use crate::{config::Settings, util::get_input_files_in_directory};
 
@@ -14,31 +14,17 @@ pub fn solve(
     settings: &Settings,
     problems_dir: &Path,
     problem_name: &str,
-    solution_file_name: Option<&str>,
-    solution_lang: Option<&String>,
+    solution_file: &RunnableFile,
 ) -> Result<()> {
     let project_root = get_project_root()?;
     let problem_path = project_root.join(get_problem(problems_dir, problem_name)?);
 
-    let solution_lang = solution_lang.unwrap_or(&settings.problem.default_lang);
-    let mut solution_file = format!("solution.{solution_lang}");
-
-    // Use custom solution file or script file if it exists
-    if solution_file_name.is_some() {
-        solution_file = solution_file_name
-            .context("Failed to get solution file name")?
-            .to_string();
-    }
-
-    let runnable_file =
-        RunnableFile::new(settings, RunnableCategory::Solution, Some(&solution_file))?;
-
     let run_command = RunCommand::new(
         settings,
         &problem_path,
-        &runnable_file,
+        solution_file,
         problem_path.join("solutions/solution.out"),
-        problem_path.join(&solution_file),
+        problem_path.join(format!("{solution_file}")),
     )?;
 
     let test_files = get_input_files_in_directory(problem_path.join("tests"))?;

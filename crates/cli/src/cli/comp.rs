@@ -5,6 +5,7 @@ use clap::{Arg, ArgAction, ArgMatches, Command};
 
 use crate::comp::{add, create, finish, list, remove, rename, solve, test};
 use crate::config::get_settings;
+use crate::problem::run::{RunnableCategory, RunnableFile};
 use crate::util::get_project_root;
 
 pub fn cli() -> Command {
@@ -189,7 +190,10 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 .context("Competition name is required")?;
             let solution_lang = cmd.try_get_one::<String>("lang")?;
 
-            solve::solve(&settings, &problems_dir, comp_name, solution_lang)?;
+            let solution_file =
+                RunnableFile::new(&settings, RunnableCategory::Solution, None, solution_lang)?;
+
+            solve::solve(&settings, &problems_dir, comp_name, solution_file)?;
         }
         Some(("test", cmd)) => {
             let comp_name = cmd
@@ -197,7 +201,10 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 .context("Competition name is required")?;
             let solution_lang = cmd.try_get_one::<String>("lang")?;
 
-            test::test(&settings, &problems_dir, comp_name, solution_lang)?;
+            let solution_file =
+                RunnableFile::new(&settings, RunnableCategory::Solution, None, solution_lang)?;
+
+            test::test(&settings, &problems_dir, comp_name, solution_file)?;
         }
         _ => {}
     }
