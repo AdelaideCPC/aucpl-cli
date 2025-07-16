@@ -79,6 +79,10 @@ pub fn cli() -> Command {
                         .long("generator-file")
                         .help("Name of the generator file")
                         .action(ArgAction::Set),
+                    Arg::new("generator-lang")
+                        .long("generator-lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
                         .long("problem")
@@ -93,6 +97,10 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
@@ -235,11 +243,12 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 solution_files.push(solution_file?);
             }
 
+            let generator_lang = cmd.try_get_one::<String>("generator-lang")?;
             let generator = RunnableFile::new(
                 &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("generator-file")?,
-                None,
+                generator_lang,
             )?;
 
             let fuzz_args = fuzz::FuzzArgs {
@@ -257,11 +266,12 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
+            let generator_lang = cmd.try_get_one::<String>("lang")?;
             let generator = RunnableFile::new(
                 &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("file")?,
-                None,
+                generator_lang,
             )?;
 
             let test_name = cmd
