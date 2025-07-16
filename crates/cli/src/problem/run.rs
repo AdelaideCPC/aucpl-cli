@@ -38,26 +38,46 @@ pub struct RunnableFile {
 
 impl RunnableFile {
     /// Sets the file name if given, and infers the language from the file
-    /// extension. Otherwise defaults to the category name and the default
-    /// language from the settings.
+    /// extension. If the language is provided but not the file name, the
+    /// default language file is used for that category.
+    ///
+    /// If neither is provided, it defaults to the category name
+    /// and the default language from the settings.
     pub fn new(
         settings: &Settings,
         category: RunnableCategory,
         name: Option<&String>,
+        language: Option<&String>,
     ) -> Result<Self> {
-        let lang: String;
-        let filename: String;
-        if name.is_none() {
-            lang = match category {
-                RunnableCategory::Solution => settings.problem.default_lang.clone(),
-                RunnableCategory::Generator => settings.problem.default_generator_lang.clone(),
-            };
-            filename = format!("{category}.{lang}");
-        } else {
-            lang =
-                get_lang_from_extension(name.context("Failed to get filename of runnable file")?)?;
-            filename = name.unwrap().to_string();
-        }
+        let (filename, lang) = match (name, language) {
+            (Some(name), Some(lang)) => {
+                let file_lang = get_lang_from_extension(name)
+                    .context("Failed to get language from file extension")?;
+                if file_lang != *lang {
+                    bail!(
+                        "Language from file extension ({file_lang}) does not match provided language ({lang})"
+                    );
+                }
+                (name.to_string(), lang.to_string())
+            }
+            (Some(name), None) => {
+                let lang = get_lang_from_extension(name)
+                    .context("Failed to get language from file extension")?;
+                (name.to_string(), lang)
+            }
+            (None, Some(lang)) => {
+                let filename = format!("{category}.{lang}");
+                (filename, lang.to_string())
+            }
+            (None, None) => {
+                let lang = match category {
+                    RunnableCategory::Solution => settings.problem.default_lang.clone(),
+                    RunnableCategory::Generator => settings.problem.default_generator_lang.clone(),
+                };
+                let filename = format!("{category}.{lang}");
+                (filename, lang)
+            }
+        };
 
         Ok(Self {
             name: filename,

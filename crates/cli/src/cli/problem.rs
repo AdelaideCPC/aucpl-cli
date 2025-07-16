@@ -79,6 +79,10 @@ pub fn cli() -> Command {
                         .long("generator-file")
                         .help("Name of the generator file")
                         .action(ArgAction::Set),
+                    Arg::new("generator-lang")
+                        .long("generator-lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
+                        .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
                         .long("problem")
@@ -93,6 +97,10 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the generator file")
+                        .action(ArgAction::Set),
+                    Arg::new("lang")
+                        .long("lang")
+                        .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
                     Arg::new("problem")
                         .short('p')
@@ -190,7 +198,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
             let mut solution_files: Vec<RunnableFile> = Vec::new();
             for f in files {
                 let solution_file =
-                    RunnableFile::new(&settings, RunnableCategory::Solution, Some(f));
+                    RunnableFile::new(&settings, RunnableCategory::Solution, Some(f), None);
                 solution_files.push(solution_file?);
             }
 
@@ -231,7 +239,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
             let mut solution_files: Vec<RunnableFile> = Vec::new();
             for f in files {
                 let solution_file =
-                    RunnableFile::new(&settings, RunnableCategory::Solution, Some(f));
+                    RunnableFile::new(&settings, RunnableCategory::Solution, Some(f), None);
                 solution_files.push(solution_file?);
             }
 
@@ -239,6 +247,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("generator-file")?,
+                cmd.try_get_one::<String>("generator-lang")?,
             )?;
 
             let fuzz_args = fuzz::FuzzArgs {
@@ -260,6 +269,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
             )?;
 
             let test_name = cmd
@@ -281,16 +291,14 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
-            let solution_lang = cmd.try_get_one::<String>("lang")?;
-
-            solve::solve(
+            let solution_file = RunnableFile::new(
                 &settings,
-                &problems_dir,
-                problem_name,
-                solution_file,
-                solution_lang,
+                RunnableCategory::Solution,
+                cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
             )?;
+
+            solve::solve(&settings, &problems_dir, problem_name, &solution_file)?;
         }
         Some(("test", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {
@@ -298,16 +306,14 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let solution_file = cmd.try_get_one::<String>("file")?.map(|f| f.as_str());
-            let solution_lang = cmd.try_get_one::<String>("lang")?;
-
-            test::test(
+            let solution_file = RunnableFile::new(
                 &settings,
-                &problems_dir,
-                problem_name,
-                solution_file,
-                solution_lang,
+                RunnableCategory::Solution,
+                cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
             )?;
+
+            test::test(&settings, &problems_dir, problem_name, &solution_file)?;
         }
         _ => {}
     }
