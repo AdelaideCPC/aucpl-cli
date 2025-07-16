@@ -243,12 +243,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 solution_files.push(solution_file?);
             }
 
-            let generator_lang = cmd.try_get_one::<String>("generator-lang")?;
             let generator = RunnableFile::new(
                 &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("generator-file")?,
-                generator_lang,
+                cmd.try_get_one::<String>("generator-lang")?,
             )?;
 
             let fuzz_args = fuzz::FuzzArgs {
@@ -266,12 +265,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let generator_lang = cmd.try_get_one::<String>("lang")?;
             let generator = RunnableFile::new(
                 &settings,
                 RunnableCategory::Generator,
                 cmd.try_get_one::<String>("file")?,
-                generator_lang,
+                cmd.try_get_one::<String>("lang")?,
             )?;
 
             let test_name = cmd
@@ -293,14 +291,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let solution_file = cmd.try_get_one::<String>("file")?;
-            let solution_lang = cmd.try_get_one::<String>("lang")?;
-
             let solution_file = RunnableFile::new(
                 &settings,
                 RunnableCategory::Solution,
-                solution_file,
-                solution_lang,
+                cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
             )?;
 
             solve::solve(&settings, &problems_dir, problem_name, &solution_file)?;
@@ -311,14 +306,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let solution_file = cmd.try_get_one::<String>("file")?;
-            let solution_lang = cmd.try_get_one::<String>("lang")?;
-
             let solution_file = RunnableFile::new(
                 &settings,
                 RunnableCategory::Solution,
-                solution_file,
-                solution_lang,
+                cmd.try_get_one::<String>("file")?,
+                cmd.try_get_one::<String>("lang")?,
             )?;
 
             test::test(&settings, &problems_dir, problem_name, &solution_file)?;
