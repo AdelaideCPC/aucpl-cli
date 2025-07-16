@@ -4,7 +4,7 @@ members = ["crates/*"]
 default-members = ["crates/cli"]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.1"
 description = "A helpful tool for AUCPL problem setters"
 edition = "2021"
 authors = ["Adelaide Competitive Programming Club"]
