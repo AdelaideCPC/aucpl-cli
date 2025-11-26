@@ -23,10 +23,7 @@ pub fn generate(
 
     let test_path = problem_path.join(format!("tests/{test_name}.in"));
     if test_path.exists() {
-        bail!(
-            "Test file already exists: {:?}, use `--test-name` to specify another name",
-            test_path
-        );
+        bail!("Test file already exists: {test_path:?}, use `--test-name` to specify another name");
     }
 
     let run_command = RunCommand::new(

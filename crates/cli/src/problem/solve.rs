@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use std::time::Duration;
 
 use anyhow::{Context, Result};
 
@@ -30,6 +31,9 @@ pub fn solve(
     let test_files = get_input_files_in_directory(problem_path.join("tests"))?;
 
     eprintln!("Running the solution file for each test case...");
+
+    let mut total_time = Duration::new(0, 0);
+
     // Run the file for every test input and generate the corresponding output
     for test_file in test_files {
         let input_file_path = problem_path.join(format!("tests/{test_file}"));
@@ -43,10 +47,18 @@ pub fn solve(
         let result = run_command.get_result(Some(&input_file_path))?;
         let mut output_file = File::create(output_file_path)?;
         output_file.write_all(result.output.as_bytes())?;
+        let elapsed_time = result.elapsed_time;
 
-        eprintln!("  - generated output for test file: {test_file}");
+        eprintln!(
+            "  - generated output for test file: {test_file}, time taken: {:.5}s",
+            elapsed_time.as_secs_f64()
+        );
+        total_time += elapsed_time;
     }
-    eprintln!("Finished generating outputs for all test cases");
+    eprintln!(
+        "Finished generating outputs for all test cases, time taken: {:.5}s",
+        total_time.as_secs_f64()
+    );
 
     run_command.cleanup()?;
 

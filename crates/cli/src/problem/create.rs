@@ -41,7 +41,7 @@ pub fn create(problems_dir: &Path, problem_name: &str, difficulty: u16) -> Resul
         .join(problem_name);
 
     if fs::exists(path)? || get_problem(problems_dir, problem_name).is_ok() {
-        bail!("The problem '{}' already exists!", problem_name);
+        bail!("The problem '{problem_name}' already exists!");
     }
 
     fs::create_dir_all(path)?;

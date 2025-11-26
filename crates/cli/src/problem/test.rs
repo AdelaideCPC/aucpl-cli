@@ -35,7 +35,7 @@ pub fn test(
 
     let mut tests_passed = 0;
     let mut total_tests = 0;
-    let mut total_time: Duration = Duration::new(0, 0);
+    let mut total_time = Duration::new(0, 0);
 
     for test_file in test_files {
         let input_file_path = problem_path.join(format!("tests/{test_file}"));
