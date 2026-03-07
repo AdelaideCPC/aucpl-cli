@@ -58,16 +58,16 @@ impl RunnableFile {
                         "Language from file extension ({file_lang}) does not match provided language ({lang})"
                     );
                 }
-                (name.to_string(), lang.to_string())
+                (name.to_owned(), lang.to_owned())
             }
             (Some(name), None) => {
                 let lang = get_lang_from_extension(name)
                     .context("Failed to get language from file extension")?;
-                (name.to_string(), lang)
+                (name.to_owned(), lang)
             }
             (None, Some(lang)) => {
                 let filename = format!("{category}.{lang}");
-                (filename, lang.to_string())
+                (filename, lang.to_owned())
             }
             (None, None) => {
                 let lang = match category {

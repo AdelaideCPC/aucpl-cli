@@ -7,8 +7,10 @@ use normpath::PathExt;
 use serde_json::{from_reader, json, to_writer, to_writer_pretty};
 use walkdir::WalkDir;
 
+use crate::errors::CliError;
 use crate::paths::{convert_legacy_path, normalize_for_storage, resolve_stored_path};
 use crate::problem::PROBLEM_MAPPINGS_FILE;
+use crate::suggest::suggest_corrections;
 use crate::util::get_project_root;
 
 /// Sync problem mappings
@@ -51,7 +53,7 @@ pub fn sync_mappings(problems_dir: &Path) -> Result<()> {
             .context("Could not get folder name")?
             .to_str()
             .context("Could not convert OS string to str")?
-            .to_string();
+            .to_owned();
         mappings.insert(folder_name, relative_path);
     }
 
@@ -84,10 +86,22 @@ pub fn get_problem(problems_dir: &Path, problem: &str) -> Result<String> {
             mappings_file = File::open(mappings_file_path)?;
             mappings = from_reader(&mappings_file)?;
 
-            let val = mappings
-                .get(problem)
-                .context("Failed to get the problem. Maybe it doesn't exist?")?;
-            Ok(convert_legacy_path(val))
+            match mappings.get(problem) {
+                Some(val) => Ok(convert_legacy_path(val)),
+                None => {
+                    // Get suggestions for similar problem names
+                    let candidates: Vec<&str> = mappings.keys().map(|s| s.as_str()).collect();
+                    let suggestions = suggest_corrections(problem, &candidates, 3);
+
+                    Err(CliError::NotFound {
+                        resource_type: "problem".to_owned(),
+                        name: problem.to_owned(),
+                        verbose: Some(format!("Problem '{problem}' not found in mappings file")),
+                        suggestions,
+                    }
+                    .into())
+                }
+            }
         }
     }
 }
@@ -104,4 +118,17 @@ pub fn problem_exists(problems_dir: &Path, problem: &str) -> Result<bool> {
     let mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     Ok(mappings.contains_key(problem))
+}
+
+/// Get all problem names from the mappings file.
+pub fn get_all_problem_names(problems_dir: &Path) -> Result<Vec<String>> {
+    let mappings_file_path = &problems_dir.join(PROBLEM_MAPPINGS_FILE);
+    if !fs::exists(mappings_file_path)? {
+        return Ok(vec![]);
+    }
+
+    let mappings_file = File::open(mappings_file_path)?;
+    let mappings: HashMap<String, String> = from_reader(&mappings_file)?;
+
+    Ok(mappings.keys().cloned().collect())
 }

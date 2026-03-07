@@ -1,6 +1,6 @@
 use std::fs;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
 use crate::config::get_settings;
@@ -177,8 +177,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            check::check(problems_dir, problem_name)
-                .map_err(|err| anyhow!("Failed check: {err}"))?;
+            check::check(problems_dir, problem_name)?;
         }
         Some(("compare", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {
@@ -204,7 +203,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
 
             let compare_args = compare::CompareArgs {
                 problems_dir: &problems_dir,
-                problem_name: problem_name.to_string(),
+                problem_name: problem_name.to_owned(),
                 solution_files,
             };
 
@@ -252,7 +251,7 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
 
             let fuzz_args = fuzz::FuzzArgs {
                 problems_dir: &problems_dir,
-                problem_name: problem_name.to_string(),
+                problem_name: problem_name.to_owned(),
                 solution_files,
                 generator,
             };

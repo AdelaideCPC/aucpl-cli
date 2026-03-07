@@ -14,9 +14,15 @@ clap.workspace = true
 config.workspace = true
 normpath.workspace = true
 numeric-sort.workspace = true
+owo-colors.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+strsim.workspace = true
 subprocess.workspace = true
+thiserror.workspace = true
 uuid.workspace = true
 walkdir.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
