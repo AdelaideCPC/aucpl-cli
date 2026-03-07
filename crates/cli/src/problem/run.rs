@@ -200,9 +200,10 @@ impl RunCommand {
         }
 
         let start_time = Instant::now();
-        if input_file_path.is_some() {
+
+        if let Some(p) = input_file_path {
             final_cmd = final_cmd
-                .stdin(File::open(input_file_path.unwrap()).context("Failed to get input file")?)
+                .stdin(File::open(p).context("Failed to get input file")?)
                 .stdout(Redirection::Pipe);
         } else {
             final_cmd = final_cmd.stdout(Redirection::Pipe);

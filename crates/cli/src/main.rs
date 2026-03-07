@@ -4,6 +4,7 @@ use clap::Command;
 mod cli;
 mod comp;
 mod config;
+mod paths;
 mod problem;
 mod publish;
 mod sync;

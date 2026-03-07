@@ -17,7 +17,7 @@ pub fn archive(problems_dir: &Path, problem_name: &str) -> Result<()> {
     let problem_path = match get_problem(problems_dir, problem_name) {
         Ok(val) => val,
         Err(_) => {
-            bail!("Failed to archive the problem. Does the problem exist?");
+            bail!("Failed to archive the problem '{problem_name}'. Does the problem exist?");
         }
     };
 

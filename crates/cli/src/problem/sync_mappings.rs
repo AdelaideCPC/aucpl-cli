@@ -7,6 +7,7 @@ use normpath::PathExt;
 use serde_json::{from_reader, json, to_writer, to_writer_pretty};
 use walkdir::WalkDir;
 
+use crate::paths::{convert_legacy_path, normalize_for_storage, resolve_stored_path};
 use crate::problem::PROBLEM_MAPPINGS_FILE;
 use crate::util::get_project_root;
 
@@ -27,7 +28,11 @@ pub fn sync_mappings(problems_dir: &Path) -> Result<()> {
     let mut mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     // Remove non-existent problems
-    mappings.retain(|_, path| fs::exists(path).unwrap_or(false));
+    // Convert stored Unix paths to platform-native paths for existence check
+    mappings.retain(|_, path| {
+        let platform_path = resolve_stored_path(&project_root, path);
+        fs::exists(&platform_path).unwrap_or(false)
+    });
 
     // Each problem would be in `./<status>/<difficulty>/<problem-name>`,
     // i.e. a depth of 3
@@ -38,12 +43,7 @@ pub fn sync_mappings(problems_dir: &Path) -> Result<()> {
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().is_dir())
     {
-        let relative_path = entry
-            .path()
-            .strip_prefix(&project_root)?
-            .to_str()
-            .context("Could not convert Path to str")?
-            .to_string();
+        let relative_path = normalize_for_storage(&project_root, entry.path())?;
 
         let folder_name = entry
             .path()
@@ -75,8 +75,9 @@ pub fn get_problem(problems_dir: &Path, problem: &str) -> Result<String> {
     let mut mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     // Return problem name if possible
+    // Convert legacy Windows paths (with backslashes) to Unix-style paths
     match mappings.get(problem) {
-        Some(val) => Ok(val.clone()),
+        Some(val) => Ok(convert_legacy_path(val)),
         None => {
             // Sync mappings file and try again
             sync_mappings(problems_dir)?;
@@ -86,7 +87,7 @@ pub fn get_problem(problems_dir: &Path, problem: &str) -> Result<String> {
             let val = mappings
                 .get(problem)
                 .context("Failed to get the problem. Maybe it doesn't exist?")?;
-            Ok(val.clone())
+            Ok(convert_legacy_path(val))
         }
     }
 }
