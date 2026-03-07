@@ -6,7 +6,7 @@ use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 use crate::config::get_settings;
 use crate::problem::fuzz;
 use crate::problem::run::{RunnableCategory, RunnableFile};
-use crate::problem::{archive, check, compare, create, generate, solve, test};
+use crate::problem::{archive, check, compare, create, generate, reclassify, solve, test};
 use crate::util::{get_problem_from_cwd, get_project_root};
 
 pub fn cli() -> Command {
@@ -110,6 +110,24 @@ pub fn cli() -> Command {
                     Arg::new("test-name")
                         .long("test-name")
                         .help("Name of the test case (default: \"generated\", which generates \"tests/generated.in\")")
+                        .action(ArgAction::Set),
+                ]),
+        )
+        .subcommand(
+            Command::new("reclassify")
+                .about("Reclassify (rerate) a problem's difficulty")
+                .args([
+                    Arg::new("difficulty")
+                        .short('d')
+                        .long("difficulty")
+                        .help("New difficulty of the problem. For an unrated problem, put 0")
+                        .action(ArgAction::Set)
+                        .value_parser(value_parser!(u16))
+                        .required(true),
+                    Arg::new("problem")
+                        .short('p')
+                        .long("problem")
+                        .help("Problem name (this is not the problem title)")
                         .action(ArgAction::Set),
                 ]),
         )
@@ -283,6 +301,18 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 &generator,
                 test_name,
             )?;
+        }
+        Some(("reclassify", cmd)) => {
+            let problem_name = match cmd.try_get_one::<String>("problem")? {
+                Some(name) => name,
+                None => &get_problem_from_cwd(&problems_dir)?,
+            };
+
+            let difficulty = cmd
+                .try_get_one::<u16>("difficulty")?
+                .context("Difficulty is required")?;
+
+            reclassify::reclassify(&problems_dir, problem_name, *difficulty)?;
         }
         Some(("solve", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {

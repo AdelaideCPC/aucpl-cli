@@ -7,29 +7,13 @@ use std::path::Path;
 use anyhow::{bail, Result};
 use regex::Regex;
 
+use crate::problem::difficulty::calculate_difficulty_bucket;
 use crate::problem::sync_mappings::{get_problem, sync_mappings};
 use crate::problem::PROBLEM_NAME_REGEX_PATTERN;
 
-const MIN_DIFFICULTY_BUCKET: u16 = 800;
-const MAX_DIFFICULTY_BUCKET: u16 = 5000;
-const DIFFICULTY_BUCKET_INTERVAL: u16 = 200;
-
 /// Create a new problem
 pub fn create(problems_dir: &Path, problem_name: &str, difficulty: u16) -> Result<()> {
-    let mut bucketed_difficulty = MIN_DIFFICULTY_BUCKET;
-    if difficulty > MIN_DIFFICULTY_BUCKET {
-        bucketed_difficulty += ((difficulty - MIN_DIFFICULTY_BUCKET) / DIFFICULTY_BUCKET_INTERVAL)
-            * DIFFICULTY_BUCKET_INTERVAL;
-    }
-    if bucketed_difficulty >= MAX_DIFFICULTY_BUCKET {
-        bail!("You cannot have a difficulty of over {MAX_DIFFICULTY_BUCKET}");
-    }
-
-    let difficulty_str = if difficulty == 0 {
-        "unrated".to_string()
-    } else {
-        format!("{bucketed_difficulty:0>4}")
-    };
+    let (bucketed_difficulty, difficulty_str) = calculate_difficulty_bucket(difficulty)?;
     let re = Regex::new(PROBLEM_NAME_REGEX_PATTERN)?;
     if !re.is_match(problem_name) {
         bail!("The problem name is invalid. It may only contain alphanumeric characters, dashes, and underscores.");
@@ -68,7 +52,11 @@ Problem description.
 
     sync_mappings(problems_dir)?;
 
-    eprintln!("Created problem '{problem_name}' with difficulty {difficulty}");
+    if difficulty == 0 {
+        eprintln!("Created problem '{problem_name}' with unrated difficulty");
+    } else {
+        eprintln!("Created problem '{problem_name}' with difficulty {bucketed_difficulty}");
+    }
 
     Ok(())
 }
