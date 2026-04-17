@@ -93,10 +93,12 @@ fn run() -> Result<()> {
     set_verbose(matches.get_flag("verbose"));
 
     match matches.subcommand() {
+        Some(("cd", cmd)) => cli::cd::exec(cmd)?,
         Some(("comp", cmd)) => cli::comp::exec(cmd)?,
         Some(("init", cmd)) => cli::init::exec(cmd)?,
         Some(("problem", cmd)) => cli::problem::exec(cmd)?,
         Some(("publish", cmd)) => cli::publish::exec(cmd)?,
+        Some(("shellinit", cmd)) => cli::shellinit::exec(cmd)?,
         Some(("sync", cmd)) => cli::sync::exec(cmd)?,
         _ => unreachable!(),
     }
