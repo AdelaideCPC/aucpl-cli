@@ -1,13 +1,13 @@
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::process::{Command, Stdio};
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
+use subprocess::{Exec, Redirection};
 
 use crate::config::Settings;
-use crate::problem::run::{RunCommand, RunnableFile};
+use crate::problem::run::{get_python_executable, RunCommand, RunnableFile};
 use crate::util::{get_input_files_in_directory, get_project_root};
 
 use super::sync_mappings::get_problem;
@@ -38,40 +38,38 @@ print("true" if bool(result) else "false")
 "#;
 
 fn run_custom_checker(
+    settings: &Settings,
     checker_path: &Path,
     process_output: &str,
     judge_output: &[u8],
 ) -> Result<bool> {
     let judge_output = String::from_utf8_lossy(judge_output).into_owned();
+    let python_cmd = get_python_executable(settings);
 
-    let checker_process = Command::new("python3")
+    let result = Exec::cmd(&python_cmd)
         .arg("-c")
         .arg(PYTHON_CHECKER_SCRIPT)
         .arg(checker_path)
         .arg(process_output)
         .arg(&judge_output)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .context("Failed to run checker.py with python3")?;
+        .stdout(Redirection::Pipe)
+        .stderr(Redirection::Pipe)
+        .capture()
+        .context("Failed to run checker.py")?;
 
-    let output = checker_process
-        .wait_with_output()
-        .context("Failed to wait for checker.py execution")?;
-
-    if !output.status.success() {
-        anyhow::bail!(
+    if !result.success() {
+        bail!(
             "checker.py failed: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
+            result.stderr_str().trim()
         );
     }
 
-    let checker_result = String::from_utf8_lossy(&output.stdout);
+    let checker_result = result.stdout_str();
     let passed = match checker_result.trim().to_ascii_lowercase().as_str() {
         "true" => true,
         "false" => false,
         other => {
-            anyhow::bail!(
+            bail!(
                 "checker.py must return a bool-compatible result, got: {}",
                 other
             )
@@ -132,7 +130,7 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         let passed = if use_custom_checker {
-            run_custom_checker(&checker_path, &out_str, expected)?
+            run_custom_checker(settings, &checker_path, &out_str, expected)?
         } else {
             expected == out_str.as_bytes()
         };

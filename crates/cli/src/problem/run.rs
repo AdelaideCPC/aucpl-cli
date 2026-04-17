@@ -11,6 +11,29 @@ use subprocess::{Exec, Redirection};
 use crate::config::Settings;
 use crate::util::get_lang_from_extension;
 
+/// Get the Python executable from the `py` language settings, falling back to
+/// platform-appropriate defaults (`py` on Windows, `python3` elsewhere).
+pub fn get_python_executable(settings: &Settings) -> String {
+    if let Some(py_settings) = settings.problem.solution.get("py") {
+        if let Some(run_cmd) = &py_settings.run_command {
+            if let Some(cmd) = run_cmd.first() {
+                // Skip placeholder tokens used for file substitution in run commands
+                if cmd != "@script_file" && cmd != "@bin_file" {
+                    return cmd.clone();
+                }
+            }
+        }
+    }
+    #[cfg(windows)]
+    {
+        "py".to_string()
+    }
+    #[cfg(not(windows))]
+    {
+        "python3".to_string()
+    }
+}
+
 /// Represents the category of a runnable file, either a solution or a generator.
 #[derive(Eq, PartialEq)]
 pub enum RunnableCategory {
