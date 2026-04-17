@@ -10,13 +10,8 @@ use crate::util::get_project_root;
 
 pub fn cli() -> Command {
     Command::new("cd")
-        .about("Print the target directory for a problem or the workspace root")
-        .arg(
-            Arg::new("shell-hook")
-                .long("shell-hook")
-                .help("Print shell integration snippet so 'aucpl cd' changes your current shell directory")
-                .action(ArgAction::SetTrue),
-        )
+        .about("Print the target directory for a problem or the workspace root.
+Evaluate `aucpl shellinit` to instead cd to the directory.")
         .arg(
             Arg::new("problem")
                 .help("Problem name")
@@ -25,13 +20,6 @@ pub fn cli() -> Command {
 }
 
 pub fn exec(args: &ArgMatches) -> Result<()> {
-    if args.get_flag("shell-hook") {
-        println!(
-            "aucpl() {{\n  if [ \"$1\" = \"cd\" ]; then\n    shift\n    local target\n    target=\"$(command aucpl cd \"$@\")\" || return $?\n    builtin cd -- \"$target\"\n  else\n    command aucpl \"$@\"\n  fi\n}}"
-        );
-        return Ok(());
-    }
-
     let settings = get_settings()?;
     let project_root = get_project_root()?;
 

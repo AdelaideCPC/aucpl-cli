@@ -104,7 +104,7 @@ Other
 To make `aucpl cd` change your current shell directory, install the shell hook once per shell session:
 
 ```sh
-eval "$(aucpl cd --shell-hook)"
+eval "$(aucpl shellinit)"
 ```
 
 Then you can run:

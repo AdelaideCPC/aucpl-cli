@@ -98,6 +98,7 @@ fn run() -> Result<()> {
         Some(("init", cmd)) => cli::init::exec(cmd)?,
         Some(("problem", cmd)) => cli::problem::exec(cmd)?,
         Some(("publish", cmd)) => cli::publish::exec(cmd)?,
+        Some(("shellinit", cmd)) => cli::shellinit::exec(cmd)?,
         Some(("sync", cmd)) => cli::sync::exec(cmd)?,
         _ => unreachable!(),
     }

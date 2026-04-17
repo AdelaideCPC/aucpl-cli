@@ -5,6 +5,7 @@ pub mod comp;
 pub mod init;
 pub mod problem;
 pub mod publish;
+pub mod shellinit;
 pub mod sync;
 
 pub fn builtin() -> Vec<Command> {
@@ -14,6 +15,7 @@ pub fn builtin() -> Vec<Command> {
         init::cli(),
         problem::cli(),
         publish::cli(),
+        shellinit::cli(),
         sync::cli(),
     ]
 }
