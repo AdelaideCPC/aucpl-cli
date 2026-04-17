@@ -1,15 +1,112 @@
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::Path;
+use std::process::{Command, Stdio};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use serde_json::json;
 
 use crate::config::Settings;
 use crate::problem::run::{RunCommand, RunnableFile};
 use crate::util::{get_input_files_in_directory, get_project_root};
 
 use super::sync_mappings::get_problem;
+
+const PYTHON_CHECKER_SCRIPT: &str = r#"
+import importlib.util
+import json
+import sys
+
+
+def parse_value(value):
+    stripped = value.strip()
+    if stripped == "":
+        return ""
+
+    try:
+        return json.loads(stripped)
+    except Exception:
+        return stripped
+
+
+def main():
+    payload = json.load(sys.stdin)
+
+    spec = importlib.util.spec_from_file_location("aucpl_checker", payload["checker_path"])
+    if spec is None or spec.loader is None:
+        print("Could not load checker.py", file=sys.stderr)
+        sys.exit(2)
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    if not hasattr(module, "check"):
+        print("checker.py must define a `check` function", file=sys.stderr)
+        sys.exit(2)
+
+    result = module.check(
+        parse_value(payload["process_output"]),
+        parse_value(payload["judge_output"]),
+        process_output_raw=payload["process_output"],
+        judge_output_raw=payload["judge_output"],
+        test_file=payload["test_file"],
+    )
+
+    print(json.dumps(bool(result)))
+
+
+if __name__ == "__main__":
+    main()
+"#;
+
+fn run_custom_checker(
+    checker_path: &Path,
+    process_output: &str,
+    judge_output: &[u8],
+    test_file: &str,
+) -> Result<bool> {
+    let payload = json!({
+        "checker_path": checker_path,
+        "process_output": process_output,
+        "judge_output": String::from_utf8_lossy(judge_output),
+        "test_file": test_file,
+    });
+
+    let mut checker_process = Command::new("python3")
+        .arg("-c")
+        .arg(PYTHON_CHECKER_SCRIPT)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .context("Failed to run checker.py with python3")?;
+
+    if let Some(stdin) = checker_process.stdin.as_mut() {
+        stdin
+            .write_all(payload.to_string().as_bytes())
+            .context("Failed to send checker payload to python process")?;
+    }
+
+    let output = checker_process
+        .wait_with_output()
+        .context("Failed to wait for checker.py execution")?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "checker.py failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+
+    let checker_result = String::from_utf8_lossy(&output.stdout);
+    let passed = serde_json::from_str::<bool>(checker_result.trim()).context(format!(
+        "checker.py must return a bool-compatible result, got: {}",
+        checker_result.trim()
+    ))?;
+
+    Ok(passed)
+}
 
 /// Automatically run tests on the problem.
 pub fn test(
@@ -30,8 +127,13 @@ pub fn test(
     )?;
 
     let test_files = get_input_files_in_directory(problem_path.join("tests"))?;
+    let checker_path = problem_path.join("checker.py");
+    let use_custom_checker = checker_path.exists();
 
     eprintln!("Running the solution file for each test case...");
+    if use_custom_checker {
+        eprintln!("Using custom checker at: {}", checker_path.display());
+    }
 
     let mut tests_passed = 0;
     let mut total_tests = 0;
@@ -56,7 +158,13 @@ pub fn test(
         let expected: &mut Vec<u8> = &mut Vec::new();
         output_file.read_to_end(expected)?;
 
-        if expected != out_str.as_bytes() {
+        let passed = if use_custom_checker {
+            run_custom_checker(&checker_path, &out_str, expected, &test_file)?
+        } else {
+            expected == out_str.as_bytes()
+        };
+
+        if !passed {
             eprintln!(
                 "  ! Test case failed: {test_file}, time taken: {:.5}s",
                 elapsed_time.as_secs_f64()
