@@ -96,6 +96,20 @@ Competitions
 
 Other
 
+- `aucpl cd`: Print the path to a problem directory (or the workspace root when omitted)
 - `aucpl init`: Create a new project
 - `aucpl help`: Show help
 - `aucpl sync`: Generate or update the problem mappings file
+
+To make `aucpl cd` change your current shell directory, install the shell hook once per shell session:
+
+```sh
+eval "$(aucpl cd --shell-hook)"
+```
+
+Then you can run:
+
+```sh
+aucpl cd
+aucpl cd <problem-name>
+```
