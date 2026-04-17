@@ -10,8 +10,10 @@ use crate::util::get_project_root;
 
 pub fn cli() -> Command {
     Command::new("cd")
-        .about("Print the target directory for a problem or the workspace root.
-Evaluate `aucpl shellinit` to instead cd to the directory.")
+        .about(
+            "Print the target directory for a problem or the workspace root.
+Evaluate `aucpl shellinit` to instead cd to the directory.",
+        )
         .arg(
             Arg::new("problem")
                 .help("Problem name")
