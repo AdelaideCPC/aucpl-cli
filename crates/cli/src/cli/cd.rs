@@ -26,9 +26,12 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
     let project_root = get_project_root()?;
 
     let problems_dir = project_root.join(&settings.problems_dir);
-    if !fs::exists(&problems_dir).expect("Failed to check if path exists") {
-        fs::create_dir(&problems_dir).expect("Failed to create directory");
-    }
+    fs::create_dir_all(&problems_dir).with_context(|| {
+        format!(
+            "Failed to create problems directory at {}",
+            problems_dir.display()
+        )
+    })?;
 
     let target_path = match args.try_get_one::<String>("problem")? {
         Some(problem_name) => {
