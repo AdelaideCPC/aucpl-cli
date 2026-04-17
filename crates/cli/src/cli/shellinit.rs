@@ -18,10 +18,10 @@ pub fn cli() -> Command {
 pub fn exec(args: &ArgMatches) -> Result<()> {
     _ = args;
 
-        let is_fish = std::env::var_os("FISH_VERSION").is_some();
+    let is_fish = std::env::var_os("FISH_VERSION").is_some();
 
-        if is_fish {
-                let fish_script = r#"function aucpl
+    if is_fish {
+        let fish_script = r#"function aucpl
     if test (count $argv) -gt 0; and test "$argv[1]" = "cd"
         set -e argv[1];
         set -l target (command aucpl cd $argv); or return $status;
@@ -40,11 +40,11 @@ end;
 
 complete -c aucpl -f -a "(__aucpl_complete_fish)";"#;
 
-                println!("{}", one_line_snippet(fish_script));
-                return Ok(());
-        }
+        println!("{}", one_line_snippet(fish_script));
+        return Ok(());
+    }
 
-        let sh_script = r#"aucpl() {
+    let sh_script = r#"aucpl() {
     if [ "$1" = "cd" ]; then
         shift;
         local target;
@@ -73,7 +73,7 @@ if [ -n "${ZSH_VERSION-}" ] && command -v compdef >/dev/null 2>&1; then
     compdef _aucpl_complete_zsh aucpl;
 fi;"#;
 
-        println!("{}", one_line_snippet(sh_script));
+    println!("{}", one_line_snippet(sh_script));
 
     Ok(())
 }

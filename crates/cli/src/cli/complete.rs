@@ -96,8 +96,7 @@ fn expects_competition_name(prev: Option<&str>) -> bool {
 fn consumes_next_value(token: &str) -> bool {
     matches!(
         token,
-        "-c"
-            | "--comp"
+        "-c" | "--comp"
             | "-p"
             | "--problem"
             | "-d"
@@ -116,7 +115,12 @@ fn count_positionals(words: &[String], start: usize, end_exclusive: usize) -> us
     let mut count = 0;
     let mut skip_next = false;
 
-    for token in words.iter().take(end_exclusive).skip(start).map(String::as_str) {
+    for token in words
+        .iter()
+        .take(end_exclusive)
+        .skip(start)
+        .map(String::as_str)
+    {
         if skip_next {
             skip_next = false;
             continue;
@@ -188,7 +192,10 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
     }
 
     if top_subcommand == Some("comp")
-        && matches!(nested_subcommand, Some("finish") | Some("solve") | Some("test"))
+        && matches!(
+            nested_subcommand,
+            Some("finish") | Some("solve") | Some("test")
+        )
     {
         let positionals_before_current = count_positionals(&words, 3, cword);
         if positionals_before_current == 0 && !current.starts_with('-') {
