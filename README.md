@@ -101,10 +101,18 @@ Other
 - `aucpl help`: Show help
 - `aucpl sync`: Generate or update the problem mappings file
 
-To make `aucpl cd` change your current shell directory, install the shell hook once per shell session:
+To make `aucpl cd` change your current shell directory and enable dynamic problem/competition completions, install the shell hook once per shell session.
+
+For bash/zsh:
 
 ```sh
 eval $(aucpl shellinit)
+```
+
+For fish:
+
+```fish
+aucpl shellinit | source
 ```
 
 Then you can run:
@@ -112,4 +120,6 @@ Then you can run:
 ```sh
 aucpl cd
 aucpl cd <problem-name>
+aucpl problem test -p <TAB>
+aucpl comp finish <TAB>
 ```

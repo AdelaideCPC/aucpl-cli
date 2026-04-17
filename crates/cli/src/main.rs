@@ -95,6 +95,7 @@ fn run() -> Result<()> {
     match matches.subcommand() {
         Some(("cd", cmd)) => cli::cd::exec(cmd)?,
         Some(("comp", cmd)) => cli::comp::exec(cmd)?,
+        Some(("__complete", cmd)) => cli::complete::exec(cmd)?,
         Some(("init", cmd)) => cli::init::exec(cmd)?,
         Some(("problem", cmd)) => cli::problem::exec(cmd)?,
         Some(("publish", cmd)) => cli::publish::exec(cmd)?,
