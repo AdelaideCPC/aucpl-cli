@@ -9,18 +9,9 @@ pub fn cli() -> Command {
 pub fn exec(args: &ArgMatches) -> Result<()> {
     _ = args;
 
-        println!(
-                r#"aucpl() {
-    if [ "$1" = "cd" ]; then
-        shift
-        local target
-        target="$(command aucpl cd "$@")" || return $?
-        builtin cd -- "$target"
-    else
-        command aucpl "$@"
-    fi
-}"#
-        );
+    println!(
+        r#"aucpl() {{ if [ "$1" = "cd" ]; then shift; local target; target="$(command aucpl cd "$@")" || return $?; builtin cd -- "$target"; else command aucpl "$@"; fi; }}"#
+    );
 
     Ok(())
 }
