@@ -1,11 +1,10 @@
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use serde_json::json;
 
 use crate::config::Settings;
 use crate::problem::run::{RunCommand, RunnableFile};
@@ -15,78 +14,46 @@ use super::sync_mappings::get_problem;
 
 const PYTHON_CHECKER_SCRIPT: &str = r#"
 import importlib.util
-import json
 import sys
 
+checker_path = sys.argv[1]
+process_output = sys.argv[2]
+judge_output = sys.argv[3]
 
-def parse_value(value):
-    stripped = value.strip()
-    if stripped == "":
-        return ""
+spec = importlib.util.spec_from_file_location("aucpl_checker", checker_path)
+if spec is None or spec.loader is None:
+    print("Could not load checker.py", file=sys.stderr)
+    sys.exit(2)
 
-    try:
-        return json.loads(stripped)
-    except Exception:
-        return stripped
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
 
+if not hasattr(module, "check"):
+    print("checker.py must define a `check` function", file=sys.stderr)
+    sys.exit(2)
 
-def main():
-    payload = json.load(sys.stdin)
+result = module.check(process_output, judge_output)
 
-    spec = importlib.util.spec_from_file_location("aucpl_checker", payload["checker_path"])
-    if spec is None or spec.loader is None:
-        print("Could not load checker.py", file=sys.stderr)
-        sys.exit(2)
-
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    if not hasattr(module, "check"):
-        print("checker.py must define a `check` function", file=sys.stderr)
-        sys.exit(2)
-
-    result = module.check(
-        parse_value(payload["process_output"]),
-        parse_value(payload["judge_output"]),
-        process_output_raw=payload["process_output"],
-        judge_output_raw=payload["judge_output"],
-        test_file=payload["test_file"],
-    )
-
-    print(json.dumps(bool(result)))
-
-
-if __name__ == "__main__":
-    main()
+print("true" if bool(result) else "false")
 "#;
 
 fn run_custom_checker(
     checker_path: &Path,
     process_output: &str,
     judge_output: &[u8],
-    test_file: &str,
 ) -> Result<bool> {
-    let payload = json!({
-        "checker_path": checker_path,
-        "process_output": process_output,
-        "judge_output": String::from_utf8_lossy(judge_output),
-        "test_file": test_file,
-    });
+    let judge_output = String::from_utf8_lossy(judge_output).into_owned();
 
-    let mut checker_process = Command::new("python3")
+    let checker_process = Command::new("python3")
         .arg("-c")
         .arg(PYTHON_CHECKER_SCRIPT)
-        .stdin(Stdio::piped())
+        .arg(checker_path)
+        .arg(process_output)
+        .arg(&judge_output)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .context("Failed to run checker.py with python3")?;
-
-    if let Some(stdin) = checker_process.stdin.as_mut() {
-        stdin
-            .write_all(payload.to_string().as_bytes())
-            .context("Failed to send checker payload to python process")?;
-    }
 
     let output = checker_process
         .wait_with_output()
@@ -100,10 +67,16 @@ fn run_custom_checker(
     }
 
     let checker_result = String::from_utf8_lossy(&output.stdout);
-    let passed = serde_json::from_str::<bool>(checker_result.trim()).context(format!(
-        "checker.py must return a bool-compatible result, got: {}",
-        checker_result.trim()
-    ))?;
+    let passed = match checker_result.trim().to_ascii_lowercase().as_str() {
+        "true" => true,
+        "false" => false,
+        other => {
+            anyhow::bail!(
+                "checker.py must return a bool-compatible result, got: {}",
+                other
+            )
+        }
+    };
 
     Ok(passed)
 }
@@ -159,7 +132,7 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         let passed = if use_custom_checker {
-            run_custom_checker(&checker_path, &out_str, expected, &test_file)?
+            run_custom_checker(&checker_path, &out_str, expected)?
         } else {
             expected == out_str.as_bytes()
         };
