@@ -106,7 +106,7 @@ To make `aucpl cd` change your current shell directory and enable dynamic proble
 For bash/zsh:
 
 ```sh
-eval $(aucpl shellinit)
+eval "$(aucpl shellinit)"
 ```
 
 For fish:
