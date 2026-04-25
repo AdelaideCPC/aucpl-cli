@@ -56,7 +56,10 @@ complete -c aucpl -f -a "(__aucpl_complete_fish)";"#;
 };
 
 _aucpl_complete_bash() {
-    mapfile -t COMPREPLY < <(command aucpl __complete --cword "$COMP_CWORD" -- "${COMP_WORDS[@]}" 2>/dev/null);
+    COMPREPLY=();
+    while IFS= read -r reply; do
+        COMPREPLY+=("$reply");
+    done < <(command aucpl __complete --cword "$COMP_CWORD" -- "${COMP_WORDS[@]}" 2>/dev/null);
 };
 
 _aucpl_complete_zsh() {
