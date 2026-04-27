@@ -201,6 +201,26 @@ impl RunCommand {
         })
     }
 
+    /// Creates a `RunCommand` directly from an explicit command vector.
+    ///
+    /// This is useful for ad-hoc command execution where language settings and
+    /// compilation are not needed.
+    pub fn from_command(
+        bin_file: PathBuf,
+        script_file: PathBuf,
+        run_command: Vec<String>,
+    ) -> Result<Self> {
+        if run_command.is_empty() {
+            bail!("No run command specified. It must be specified!");
+        }
+
+        Ok(Self {
+            bin_file,
+            script_file,
+            run_command,
+        })
+    }
+
     /// Returns the result of running the command, capturing its output and elapsed time.
     /// If `input_file_path` is provided, it will be used as the standard input for the command.
     pub fn get_result(&self, input_file_path: Option<&PathBuf>) -> Result<RunResult> {

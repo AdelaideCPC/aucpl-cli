@@ -1,10 +1,10 @@
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
-use subprocess::{Exec, Redirection};
 
 use crate::config::Settings;
 use crate::problem::run::{get_python_executable, RunCommand, RunnableFile};
@@ -46,25 +46,25 @@ fn run_custom_checker(
     let judge_output = String::from_utf8_lossy(judge_output).into_owned();
     let python_cmd = get_python_executable(settings);
 
-    let result = Exec::cmd(&python_cmd)
-        .arg("-c")
-        .arg(PYTHON_CHECKER_SCRIPT)
-        .arg(checker_path)
-        .arg(process_output)
-        .arg(&judge_output)
-        .stdout(Redirection::Pipe)
-        .stderr(Redirection::Pipe)
-        .capture()
-        .context("Failed to run checker.py")?;
+    let checker_run = RunCommand::from_command(
+        PathBuf::new(),
+        checker_path.to_path_buf(),
+        vec![
+            python_cmd,
+            "-c".to_string(),
+            PYTHON_CHECKER_SCRIPT.to_string(),
+            "@script_file".to_string(),
+            process_output.to_string(),
+            judge_output,
+        ],
+    )
+    .context("Failed to prepare checker command")?;
 
-    if !result.success() {
-        bail!(
-            "checker.py failed: {}",
-            result.stderr_str().trim()
-        );
-    }
+    let checker_result = checker_run
+        .get_result(None)
+        .context("Failed to run checker.py")?
+        .output;
 
-    let checker_result = result.stdout_str();
     let passed = match checker_result.trim().to_ascii_lowercase().as_str() {
         "true" => true,
         "false" => false,
