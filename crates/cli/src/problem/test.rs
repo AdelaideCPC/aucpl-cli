@@ -19,6 +19,7 @@ import sys
 checker_path = sys.argv[1]
 process_output = sys.argv[2]
 judge_output = sys.argv[3]
+judge_input = sys.argv[4]
 
 spec = importlib.util.spec_from_file_location("aucpl_checker", checker_path)
 if spec is None or spec.loader is None:
@@ -32,7 +33,7 @@ if not hasattr(module, "check"):
     print("checker.py must define a `check` function", file=sys.stderr)
     sys.exit(2)
 
-result = module.check(process_output, judge_output)
+result = module.check(process_output, judge_output, judge_input)
 
 print("true" if bool(result) else "false")
 "#;
@@ -42,8 +43,10 @@ fn run_custom_checker(
     checker_path: &Path,
     process_output: &str,
     judge_output: &[u8],
+    judge_input: &[u8],
 ) -> Result<bool> {
     let judge_output = String::from_utf8_lossy(judge_output).into_owned();
+    let judge_input = String::from_utf8_lossy(judge_input).into_owned();
     let python_cmd = get_python_executable(settings);
 
     let checker_run = RunCommand::from_command(
@@ -56,6 +59,7 @@ fn run_custom_checker(
             "@script_file".to_string(),
             process_output.to_string(),
             judge_output,
+            judge_input,
         ],
     )
     .context("Failed to prepare checker command")?;
@@ -119,6 +123,10 @@ pub fn test(
                 .context("Failed to strip suffix of test file")?
         ));
 
+        let mut input_file = File::open(&input_file_path)?;
+        let mut input_bytes: Vec<u8> = Vec::new();
+        input_file.read_to_end(&mut input_bytes)?;
+
         let result = run_command.get_result(Some(&input_file_path))?;
 
         let mut output_file = File::open(output_file_path)?;
@@ -130,7 +138,7 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         let passed = if use_custom_checker {
-            run_custom_checker(settings, &checker_path, &out_str, expected)?
+            run_custom_checker(settings, &checker_path, &out_str, expected, &input_bytes)?
         } else {
             expected == out_str.as_bytes()
         };
