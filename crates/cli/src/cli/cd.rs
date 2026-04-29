@@ -2,6 +2,7 @@ use std::fs;
 
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, ArgMatches, Command};
+use normpath::PathExt;
 
 use crate::config::get_settings;
 use crate::paths::resolve_stored_path;
@@ -25,7 +26,10 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
     let settings = get_settings()?;
     let project_root = get_project_root()?;
 
-    let problems_dir = project_root.join(&settings.problems_dir);
+    let problems_dir = project_root
+        .join(&settings.problems_dir)
+        .normalize()?
+        .into_path_buf();
     fs::create_dir_all(&problems_dir).with_context(|| {
         format!(
             "Failed to create problems directory at {}",
