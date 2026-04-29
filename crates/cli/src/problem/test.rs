@@ -20,6 +20,8 @@ checker_path = sys.argv[1]
 process_output = sys.argv[2]
 judge_output = sys.argv[3]
 
+judge_input = sys.stdin.read()
+
 spec = importlib.util.spec_from_file_location("aucpl_checker", checker_path)
 if spec is None or spec.loader is None:
     print("Could not load checker.py", file=sys.stderr)
@@ -32,7 +34,7 @@ if not hasattr(module, "check"):
     print("checker.py must define a `check` function", file=sys.stderr)
     sys.exit(2)
 
-result = module.check(process_output, judge_output)
+result = module.check(process_output, judge_output, judge_input=judge_input)
 
 print("true" if bool(result) else "false")
 "#;
@@ -42,6 +44,7 @@ fn run_custom_checker(
     checker_path: &Path,
     process_output: &str,
     judge_output: &[u8],
+    input_file_path: &PathBuf,
 ) -> Result<bool> {
     let judge_output = String::from_utf8_lossy(judge_output).into_owned();
     let python_cmd = get_python_executable(settings);
@@ -59,9 +62,8 @@ fn run_custom_checker(
         ],
     )
     .context("Failed to prepare checker command")?;
-
     let checker_result = checker_run
-        .get_result(None)
+        .get_result(Some(input_file_path))
         .context("Failed to run checker.py")?
         .output;
 
@@ -130,7 +132,13 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         let passed = if use_custom_checker {
-            run_custom_checker(settings, &checker_path, &out_str, expected)?
+            run_custom_checker(
+                settings,
+                &checker_path,
+                &out_str,
+                expected,
+                &input_file_path,
+            )?
         } else {
             expected == out_str.as_bytes()
         };
