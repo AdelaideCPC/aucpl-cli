@@ -38,7 +38,7 @@ Problems are stored in a `problems` folder. This can be changed in the `settings
 
 Within each difficulty folder, there are the individual problems. Each of these folders will contain a `problem.md` which is the problem statement. There will be a `tests` folder for test cases and a `solutions` folder for reference solutions.
 
-If a problem folder contains a `checker.py` next to `problem.md`, `aucpl problem test` will use it as a custom checker. The file must define `check(process_output, judge_output, judge_input)` and return a boolean.
+If a problem folder contains a `checker.py` next to `problem.md`, `aucpl problem test` will use it as a custom checker. The file must define `check(process_output, judge_output, **kwargs)` and return a boolean. The `judge_input` value is provided in `kwargs`.
 
 Lastly, there is a `problem-mappings.json` file that maps the problem names to its stored location. This is so that in the CLI, you do not have to specify things like the rating or whether it's a new or archived problem. You can also use `aucpl sync` to generate or update the mappings.
 
