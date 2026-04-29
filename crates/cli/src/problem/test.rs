@@ -132,7 +132,13 @@ pub fn test(
         output_file.read_to_end(expected)?;
 
         let passed = if use_custom_checker {
-            run_custom_checker(settings, &checker_path, &out_str, expected, &input_file_path)?
+            run_custom_checker(
+                settings,
+                &checker_path,
+                &out_str,
+                expected,
+                &input_file_path,
+            )?
         } else {
             expected == out_str.as_bytes()
         };
