@@ -2,10 +2,10 @@ use clap::{Arg, ArgAction, Command};
 
 use crate::{ABOUT, BIN_NAME, NAME, VERSION};
 
+pub(crate) mod arg_builders;
 pub mod cd;
 pub mod comp;
 pub mod complete;
-pub(crate) mod completion_args;
 pub mod init;
 pub mod problem;
 pub mod publish;

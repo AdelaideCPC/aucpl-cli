@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use clap::{ArgMatches, Command};
 use normpath::PathExt;
 
-use crate::cli::completion_args::problem_arg_optional;
+use crate::cli::arg_builders::problem_arg_optional;
 use crate::config::get_settings;
 use crate::paths::resolve_stored_path;
 use crate::problem::sync_mappings::get_problem;

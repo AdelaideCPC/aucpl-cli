@@ -3,9 +3,9 @@ use std::fs;
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
-use crate::cli::completion_args::{
+use crate::cli::arg_builders::{
     competition_arg_required, competition_option_arg_optional, competition_option_arg_required,
-    problem_option_arg_required, with_competition_completion,
+    configure_competition_arg, problem_option_arg_required,
 };
 use crate::comp::{add, create, finish, list, remove, rename, solve, test};
 use crate::config::get_settings;
@@ -59,7 +59,7 @@ pub fn cli() -> Command {
                 .about("Rename a competition")
                 .arg_required_else_help(true)
                 .args([
-                    with_competition_completion(Arg::new("old_name"))
+                    configure_competition_arg(Arg::new("old_name"))
                         .long("old-name")
                         .help("Old competition name")
                         .required(true),

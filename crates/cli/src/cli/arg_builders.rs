@@ -1,4 +1,4 @@
-//! Shared clap argument builders for completion-enabled problem and competition args.
+//! Shared clap argument builders for problem and competition args.
 
 use clap::{Arg, ArgAction};
 
@@ -8,20 +8,20 @@ pub(crate) const COMPETITION_VALUE_NAME: &str = "COMP";
 const PROBLEM_HELP: &str = "Problem name (this is not the problem title)";
 const COMPETITION_HELP: &str = "Competition name";
 
-fn set_completion_metadata(arg: Arg, help: &'static str, value_name: &'static str) -> Arg {
+fn set_arg_metadata(arg: Arg, help: &'static str, value_name: &'static str) -> Arg {
     arg.help(help).value_name(value_name).action(ArgAction::Set)
 }
 
-pub(crate) fn with_problem_completion(arg: Arg) -> Arg {
-    set_completion_metadata(arg, PROBLEM_HELP, PROBLEM_VALUE_NAME)
+pub(crate) fn configure_problem_arg(arg: Arg) -> Arg {
+    set_arg_metadata(arg, PROBLEM_HELP, PROBLEM_VALUE_NAME)
 }
 
-pub(crate) fn with_competition_completion(arg: Arg) -> Arg {
-    set_completion_metadata(arg, COMPETITION_HELP, COMPETITION_VALUE_NAME)
+pub(crate) fn configure_competition_arg(arg: Arg) -> Arg {
+    set_arg_metadata(arg, COMPETITION_HELP, COMPETITION_VALUE_NAME)
 }
 
 pub(crate) fn problem_arg_optional() -> Arg {
-    with_problem_completion(Arg::new("problem"))
+    configure_problem_arg(Arg::new("problem"))
 }
 
 pub(crate) fn problem_option_arg_optional() -> Arg {
@@ -33,7 +33,7 @@ pub(crate) fn problem_option_arg_required() -> Arg {
 }
 
 pub(crate) fn competition_arg_optional() -> Arg {
-    with_competition_completion(Arg::new("comp"))
+    configure_competition_arg(Arg::new("comp"))
 }
 
 pub(crate) fn competition_arg_required() -> Arg {

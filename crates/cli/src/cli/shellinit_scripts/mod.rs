@@ -1,7 +1,7 @@
-// Provides compile-time inclusion of the shell init scripts.
+//! Provides compile-time inclusion of the shell init scripts.
 
 /// Macro to include a script file from `src/cli/shellinit_scripts` at compile time.
-/// Usage: `include_shell!("aucpl.fish")`.
+/// Usage example: `include_shell!("aucpl.bash")`.
 #[macro_export]
 macro_rules! include_shell {
     ($file:expr) => {
@@ -13,6 +13,6 @@ macro_rules! include_shell {
     };
 }
 
+pub const BASH: &str = include_shell!("aucpl.bash");
 pub const FISH: &str = include_shell!("aucpl.fish");
 pub const ZSH: &str = include_shell!("aucpl.zsh");
-pub const BASH: &str = include_shell!("aucpl.bash");

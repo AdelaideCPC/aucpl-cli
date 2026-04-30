@@ -5,11 +5,11 @@ use std::collections::BTreeSet;
 use anyhow::Result;
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
 
+use crate::cli::complete::resolve::{resolve_request, CompletionRequest};
+use crate::cli::complete::values::complete_arg_values;
+
 mod resolve;
 mod values;
-
-use self::resolve::{resolve_request, CompletionRequest};
-use self::values::complete_arg_values;
 
 /// Final completion payload ready to be printed to stdout.
 struct CompletionResult {

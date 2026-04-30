@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use clap::{Arg, ValueHint};
 use serde_json::Value;
 
-use crate::cli::completion_args::{COMPETITION_VALUE_NAME, PROBLEM_VALUE_NAME};
+use crate::cli::arg_builders::{COMPETITION_VALUE_NAME, PROBLEM_VALUE_NAME};
 use crate::comp::COMPETITIONS_FILE;
 use crate::config::get_settings;
 use crate::problem::sync_mappings::get_all_problem_names;
@@ -69,7 +69,7 @@ fn project_problems_dir() -> Option<PathBuf> {
     Some(project_root.join(&settings.problems_dir))
 }
 
-/// Read the custom completion marker encoded in an argument's value name.
+/// Infer the dynamic value category from an argument's configured value name.
 fn completion_kind(arg: &Arg) -> Option<CompletionKind> {
     let value_name = arg
         .get_value_names()
@@ -218,7 +218,7 @@ mod tests {
     use tempfile::TempDir;
 
     use super::*;
-    use crate::cli::completion_args::{competition_arg_optional, problem_arg_optional};
+    use crate::cli::arg_builders::{competition_arg_optional, problem_arg_optional};
     use crate::config::SETTINGS_FILE_DEFAULT_CONTENTS;
     use crate::problem::PROBLEM_MAPPINGS_FILE;
 

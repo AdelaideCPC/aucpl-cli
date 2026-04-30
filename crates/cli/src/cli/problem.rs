@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::{bail, Context, Result};
 use clap::{value_parser, Arg, ArgAction, ArgMatches, Command, ValueHint};
 
-use crate::cli::completion_args::problem_option_arg_optional;
+use crate::cli::arg_builders::problem_option_arg_optional;
 use crate::config::get_settings;
 use crate::problem::fuzz;
 use crate::problem::run::{RunnableCategory, RunnableFile};
