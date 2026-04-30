@@ -2,7 +2,6 @@ use std::process::ExitCode;
 use std::sync::OnceLock;
 
 use anyhow::Result;
-use clap::{Arg, ArgAction, Command};
 use owo_colors::OwoColorize;
 
 mod cli;
@@ -65,29 +64,7 @@ fn print_error(err: &anyhow::Error, verbose: bool) {
 
 /// Main entry point with proper error handling
 fn run() -> Result<()> {
-    let about_text = format!("{NAME} {VERSION}\n{ABOUT}");
-    let after_help_text =
-        format!("See '{BIN_NAME} help <command>' for more information on a command");
-
-    let cli = Command::new(NAME)
-        .bin_name(BIN_NAME)
-        .name(NAME)
-        .version(VERSION)
-        .about(about_text)
-        .after_help(after_help_text)
-        .arg_required_else_help(true)
-        .subcommands(cli::builtin())
-        .subcommand_required(true)
-        .arg(
-            Arg::new("verbose")
-                .short('v')
-                .long("verbose")
-                .help("Enable verbose output with detailed error information")
-                .action(ArgAction::SetTrue)
-                .global(true),
-        );
-
-    let matches = cli.get_matches();
+    let matches = cli::root().get_matches();
 
     // Set global verbose flag
     set_verbose(matches.get_flag("verbose"));
