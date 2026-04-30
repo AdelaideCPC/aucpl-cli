@@ -5,7 +5,11 @@
 #[macro_export]
 macro_rules! include_shell {
     ($file:expr) => {
-        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/cli/shellinit_scripts/", $file))
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/cli/shellinit_scripts/",
+            $file
+        ))
     };
 }
 

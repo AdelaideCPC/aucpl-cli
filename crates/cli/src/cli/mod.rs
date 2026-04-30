@@ -7,8 +7,8 @@ pub mod init;
 pub mod problem;
 pub mod publish;
 pub mod shellinit;
-pub mod sync;
 mod shellinit_scripts;
+pub mod sync;
 
 pub fn builtin() -> Vec<Command> {
     vec![

@@ -1,6 +1,6 @@
+use crate::cli::shellinit_scripts;
 use anyhow::Result;
 use clap::{ArgMatches, Command};
-use crate::cli::shellinit_scripts;
 
 pub fn cli() -> Command {
     Command::new("shellinit")
