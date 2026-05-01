@@ -1,9 +1,10 @@
 use std::fs;
 
 use anyhow::{Context, Result};
-use clap::{Arg, ArgAction, ArgMatches, Command};
+use clap::{ArgMatches, Command};
 use normpath::PathExt;
 
+use crate::cli::arg_builders::problem_arg_optional;
 use crate::config::get_settings;
 use crate::paths::resolve_stored_path;
 use crate::problem::sync_mappings::get_problem;
@@ -15,11 +16,7 @@ pub fn cli() -> Command {
             "Print the target directory for a problem or the workspace root.
 Evaluate `aucpl shellinit` to instead cd to the directory.",
         )
-        .arg(
-            Arg::new("problem")
-                .help("Problem name")
-                .action(ArgAction::Set),
-        )
+        .arg(problem_arg_optional())
 }
 
 pub fn exec(args: &ArgMatches) -> Result<()> {

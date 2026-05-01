@@ -15,6 +15,7 @@ A helpful command-line interface for AUCPL problem setters.
 - Generate input test cases from generator scripts
 - Compare the outputs of two or more solutions
 - Fuzz solutions to see if there are any bugs or unhandled edge cases
+- Shell completions
 
 Planned:
 
@@ -22,7 +23,6 @@ Planned:
 - Uploading problems and test cases to an online judge
 - Testing code within judge environments
 - Improve checking/validation of problems, covering more criteria
-- Shell auto completions
 
 ## Install
 
@@ -104,10 +104,18 @@ Other
 - `aucpl help`: Show help
 - `aucpl sync`: Generate or update the problem mappings file
 
-To make `aucpl cd` change your current shell directory, install the shell hook once per shell session:
+To make `aucpl cd` change your current shell directory and to also enable dynamic problem/competition completions, install the shell hook once per shell session.
+
+For bash/zsh:
 
 ```sh
-eval $(aucpl shellinit)
+eval "$(aucpl shellinit)"
+```
+
+For fish:
+
+```fish
+aucpl shellinit | source
 ```
 
 Then you can run:
@@ -115,4 +123,6 @@ Then you can run:
 ```sh
 aucpl cd
 aucpl cd <problem-name>
+aucpl problem test -p <TAB>
+aucpl comp finish <TAB>
 ```

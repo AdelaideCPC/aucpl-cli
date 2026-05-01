@@ -1,8 +1,9 @@
 use std::fs;
 
 use anyhow::{bail, Context, Result};
-use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
+use clap::{value_parser, Arg, ArgAction, ArgMatches, Command, ValueHint};
 
+use crate::cli::arg_builders::problem_option_arg_optional;
 use crate::config::get_settings;
 use crate::problem::fuzz;
 use crate::problem::run::{RunnableCategory, RunnableFile};
@@ -15,24 +16,12 @@ pub fn cli() -> Command {
         .subcommand(
             Command::new("archive")
                 .about("Archive a problem")
-                .arg(
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set)
-                ),
+                .arg(problem_option_arg_optional()),
         )
         .subcommand(
             Command::new("check")
                 .about("Check that the problem folder and test files are valid")
-                .arg(
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set)
-                ),
+                .arg(problem_option_arg_optional()),
         )
         .subcommand(
             Command::new("compare")
@@ -41,12 +30,9 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
+                        .value_hint(ValueHint::FilePath)
                         .action(ArgAction::Append),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set),
+                    problem_option_arg_optional(),
                 ]),
         )
         .subcommand(
@@ -74,20 +60,18 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
+                        .value_hint(ValueHint::FilePath)
                         .action(ArgAction::Append),
                     Arg::new("generator-file")
                         .long("generator-file")
                         .help("Name of the generator file")
+                        .value_hint(ValueHint::FilePath)
                         .action(ArgAction::Set),
                     Arg::new("generator-lang")
                         .long("generator-lang")
                         .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set),
+                    problem_option_arg_optional(),
                 ]),
         )
         .subcommand(
@@ -97,19 +81,18 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the generator file")
+                        .value_hint(ValueHint::FilePath)
                         .action(ArgAction::Set),
                     Arg::new("lang")
                         .long("lang")
                         .help("Language of the generator file (e.g. cpp, py)")
                         .action(ArgAction::Set),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set),
+                    problem_option_arg_optional(),
                     Arg::new("test-name")
                         .long("test-name")
-                        .help("Name of the test case (default: \"generated\", which generates \"tests/generated.in\")")
+                        .help(
+                            "Name of the test case (default: \"generated\", which generates \"tests/generated.in\")",
+                        )
                         .action(ArgAction::Set),
                 ]),
         )
@@ -124,11 +107,7 @@ pub fn cli() -> Command {
                         .action(ArgAction::Set)
                         .value_parser(value_parser!(u16))
                         .required(true),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set),
+                    problem_option_arg_optional(),
                 ]),
         )
         .subcommand(
@@ -138,16 +117,13 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
+                        .value_hint(ValueHint::FilePath)
                         .action(ArgAction::Set),
                     Arg::new("lang")
                         .long("lang")
                         .help("Language of the solution file (e.g. cpp, py)")
                         .action(ArgAction::Set),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set),
+                    problem_option_arg_optional(),
                 ]),
         )
         .subcommand(
@@ -157,16 +133,13 @@ pub fn cli() -> Command {
                     Arg::new("file")
                         .long("file")
                         .help("Name of the solution file")
+                        .value_hint(ValueHint::FilePath)
                         .action(ArgAction::Set),
                     Arg::new("lang")
                         .long("lang")
                         .help("Language of the solution file (e.g. cpp, py)")
                         .action(ArgAction::Set),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name (this is not the problem title)")
-                        .action(ArgAction::Set)
+                    problem_option_arg_optional(),
                 ]),
         )
         .subcommand_required(true)

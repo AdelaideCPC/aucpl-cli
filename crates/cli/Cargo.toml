@@ -11,6 +11,7 @@ path = "src/main.rs"
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
+clap_lex.workspace = true
 config.workspace = true
 normpath.workspace = true
 numeric-sort.workspace = true

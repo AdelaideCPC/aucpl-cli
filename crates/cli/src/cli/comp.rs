@@ -3,6 +3,10 @@ use std::fs;
 use anyhow::{Context, Result};
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
+use crate::cli::arg_builders::{
+    competition_arg_required, competition_option_arg_optional, competition_option_arg_required,
+    configure_competition_arg, problem_option_arg_required,
+};
 use crate::comp::{add, create, finish, list, remove, rename, solve, test};
 use crate::config::get_settings;
 use crate::problem::run::{RunnableCategory, RunnableFile};
@@ -16,18 +20,8 @@ pub fn cli() -> Command {
                 .about("Add a problem to a competition")
                 .arg_required_else_help(true)
                 .args([
-                    Arg::new("comp")
-                        .short('c')
-                        .long("comp")
-                        .help("Competition name")
-                        .action(ArgAction::Set)
-                        .required(true),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name")
-                        .action(ArgAction::Set)
-                        .required(true),
+                    competition_option_arg_required(),
+                    problem_option_arg_required(),
                 ]),
         )
         .subcommand(
@@ -44,37 +38,20 @@ pub fn cli() -> Command {
         .subcommand(
             Command::new("finish")
                 .about("Finish a competition and archive problems from the competition")
-                .args([Arg::new("comp")
-                    .help("Competition name")
-                    .action(ArgAction::Set)
-                    .required(true)]),
+                .args([competition_arg_required()]),
         )
         .subcommand(
             Command::new("list")
                 .about("List all competitions or list problems in a competition")
-                .args([Arg::new("comp")
-                    .short('c')
-                    .long("comp")
-                    .help("Competition name")
-                    .action(ArgAction::Set)]),
+                .args([competition_option_arg_optional()]),
         )
         .subcommand(
             Command::new("remove")
                 .about("Remove a problem from a competition")
                 .arg_required_else_help(true)
                 .args([
-                    Arg::new("comp")
-                        .short('c')
-                        .long("comp")
-                        .help("Competition name")
-                        .action(ArgAction::Set)
-                        .required(true),
-                    Arg::new("problem")
-                        .short('p')
-                        .long("problem")
-                        .help("Problem name")
-                        .action(ArgAction::Set)
-                        .required(true),
+                    competition_option_arg_required(),
+                    problem_option_arg_required(),
                 ]),
         )
         .subcommand(
@@ -82,10 +59,9 @@ pub fn cli() -> Command {
                 .about("Rename a competition")
                 .arg_required_else_help(true)
                 .args([
-                    Arg::new("old_name")
+                    configure_competition_arg(Arg::new("old_name"))
                         .long("old-name")
                         .help("Old competition name")
-                        .action(ArgAction::Set)
                         .required(true),
                     Arg::new("new_name")
                         .long("new-name")
@@ -99,10 +75,7 @@ pub fn cli() -> Command {
                 .about("Generate output test cases for all problems in a competition")
                 .arg_required_else_help(true)
                 .args([
-                    Arg::new("comp")
-                        .help("Competition name")
-                        .action(ArgAction::Set)
-                        .required(true),
+                    competition_arg_required(),
                     Arg::new("lang")
                         .long("lang")
                         .help("Language of the solution file (e.g. cpp, py)")
@@ -114,10 +87,7 @@ pub fn cli() -> Command {
                 .about("Run tests on all problems in a competition")
                 .arg_required_else_help(true)
                 .args([
-                    Arg::new("comp")
-                        .help("Competition name")
-                        .action(ArgAction::Set)
-                        .required(true),
+                    competition_arg_required(),
                     Arg::new("lang")
                         .long("lang")
                         .help("Language of the solution file (e.g. cpp, py)")
