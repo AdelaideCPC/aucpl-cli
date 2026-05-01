@@ -7,28 +7,26 @@ use std::path::Path;
 use anyhow::{bail, Result};
 use regex::Regex;
 
-use crate::problem::difficulty::calculate_difficulty_bucket;
+use crate::problem::category::validate_category;
 use crate::problem::sync_mappings::{get_problem, sync_mappings};
 use crate::problem::PROBLEM_NAME_REGEX_PATTERN;
 
-/// Create a new problem
-pub fn create(problems_dir: &Path, problem_name: &str, difficulty: u16) -> Result<()> {
-    let (bucketed_difficulty, difficulty_str) = calculate_difficulty_bucket(difficulty)?;
+/// Create a new problem.
+pub fn create(problems_dir: &Path, problem_name: &str, category: &str) -> Result<()> {
+    validate_category(category)?;
+
     let re = Regex::new(PROBLEM_NAME_REGEX_PATTERN)?;
     if !re.is_match(problem_name) {
         bail!("The problem name is invalid. It may only contain alphanumeric characters, dashes, and underscores.");
     }
 
-    let path = &problems_dir
-        .join("new")
-        .join(difficulty_str)
-        .join(problem_name);
+    let path = problems_dir.join("new").join(category).join(problem_name);
 
-    if fs::exists(path)? || get_problem(problems_dir, problem_name).is_ok() {
+    if fs::exists(&path)? || get_problem(problems_dir, problem_name).is_ok() {
         bail!("The problem '{problem_name}' already exists!");
     }
 
-    fs::create_dir_all(path)?;
+    fs::create_dir_all(&path)?;
     fs::create_dir(path.join("solutions"))?;
     fs::create_dir(path.join("tests"))?;
 
@@ -52,11 +50,47 @@ Problem description.
 
     sync_mappings(problems_dir)?;
 
-    if difficulty == 0 {
-        eprintln!("Created problem '{problem_name}' with unrated difficulty");
-    } else {
-        eprintln!("Created problem '{problem_name}' with difficulty {bucketed_difficulty}");
-    }
+    eprintln!("Created problem '{problem_name}' in category '{category}'");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use super::create;
+    use crate::problem::sync_mappings::get_problem;
+    use crate::problem::test_support::with_test_project;
+
+    #[test]
+    fn creates_problem_in_category_directory() {
+        with_test_project(|problems_dir| {
+            create(problems_dir, "two-sum", "easy").expect("problem should be created");
+
+            let problem_dir = problems_dir.join("new").join("easy").join("two-sum");
+            assert!(problem_dir.is_dir());
+            assert!(problem_dir.join("solutions").is_dir());
+            assert!(problem_dir.join("tests").is_dir());
+            assert!(problem_dir.join("problem.md").is_file());
+            assert_eq!(
+                get_problem(problems_dir, "two-sum").expect("mapping should exist"),
+                "problems/new/easy/two-sum"
+            );
+        });
+    }
+
+    #[test]
+    fn rejects_invalid_category() {
+        with_test_project(|problems_dir| {
+            let err = create(problems_dir, "two-sum", "Graphs")
+                .expect_err("invalid category should be rejected");
+
+            assert!(
+                err.to_string().contains("Invalid category 'Graphs'"),
+                "unexpected error: {err}"
+            );
+            assert!(!fs::exists(problems_dir.join("new").join("Graphs")).unwrap());
+        });
+    }
 }

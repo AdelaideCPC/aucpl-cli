@@ -643,7 +643,12 @@ mod tests {
     fn resolves_negative_number_current_token_as_positional_value() {
         let root = Command::new("aucpl").subcommand(
             Command::new("create")
-                .arg(Arg::new("difficulty").action(ArgAction::Set).required(true))
+                .arg(
+                    Arg::new("category")
+                        .long("category")
+                        .action(ArgAction::Set)
+                        .required(true),
+                )
                 .arg(Arg::new("name").action(ArgAction::Set).required(true)),
         );
         let words = vec!["aucpl".to_owned(), "create".to_owned(), "-1".to_owned()];

@@ -4,9 +4,11 @@ use clap::{Arg, ArgAction};
 
 pub(crate) const PROBLEM_VALUE_NAME: &str = "PROBLEM";
 pub(crate) const COMPETITION_VALUE_NAME: &str = "COMP";
+pub(crate) const CATEGORY_VALUE_NAME: &str = "CATEGORY";
 
 const PROBLEM_HELP: &str = "Problem name (this is not the problem title)";
 const COMPETITION_HELP: &str = "Competition name";
+const CATEGORY_HELP: &str = "Category of the problem (e.g. dp, graphs, easy, 2000)";
 
 fn set_arg_metadata(arg: Arg, help: &'static str, value_name: &'static str) -> Arg {
     arg.help(help).value_name(value_name).action(ArgAction::Set)
@@ -18,6 +20,10 @@ pub(crate) fn configure_problem_arg(arg: Arg) -> Arg {
 
 pub(crate) fn configure_competition_arg(arg: Arg) -> Arg {
     set_arg_metadata(arg, COMPETITION_HELP, COMPETITION_VALUE_NAME)
+}
+
+pub(crate) fn configure_category_arg(arg: Arg) -> Arg {
+    set_arg_metadata(arg, CATEGORY_HELP, CATEGORY_VALUE_NAME)
 }
 
 pub(crate) fn problem_arg_optional() -> Arg {
@@ -46,6 +52,14 @@ pub(crate) fn competition_option_arg_optional() -> Arg {
 
 pub(crate) fn competition_option_arg_required() -> Arg {
     competition_option_arg_optional().required(true)
+}
+
+pub(crate) fn category_option_arg_optional() -> Arg {
+    configure_category_arg(Arg::new("category")).long("category")
+}
+
+pub(crate) fn category_option_arg_required() -> Arg {
+    category_option_arg_optional().required(true)
 }
 
 #[cfg(test)]
@@ -84,5 +98,22 @@ mod tests {
         );
         assert!(matches!(arg.get_action(), ArgAction::Set));
         assert!(!arg.is_required_set());
+    }
+
+    #[test]
+    fn category_option_arg_helper_sets_expected_metadata() {
+        let arg = category_option_arg_required();
+
+        assert_eq!(arg.get_id().as_str(), "category");
+        assert_eq!(arg.get_short(), None);
+        assert_eq!(arg.get_long(), Some("category"));
+        assert_eq!(
+            arg.get_value_names()
+                .and_then(|names| names.first())
+                .map(|name| name.as_str()),
+            Some(CATEGORY_VALUE_NAME)
+        );
+        assert!(matches!(arg.get_action(), ArgAction::Set));
+        assert!(arg.is_required_set());
     }
 }

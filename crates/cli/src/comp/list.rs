@@ -21,7 +21,7 @@ pub fn list(problems_dir: &Path, comp_name: Option<&String>) -> Result<()> {
                 .get(name)
                 .context(format!("Competition '{name}' not found"))?;
 
-            // TODO: Print difficulty as well
+            // TODO: Print category as well
             // NOTE: More metadata can be listed once we actually store them
             eprintln!("Problems in '{name}':");
             for p in &comp_data.problems {

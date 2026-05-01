@@ -210,58 +210,13 @@ pub(super) fn complete_arg_values(arg: &Arg, current: &str) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-    use std::path::{Path, PathBuf};
-    use std::sync::{Mutex, OnceLock};
-
     use clap::{Arg, ArgAction, ValueHint};
     use tempfile::TempDir;
 
     use super::*;
     use crate::cli::arg_builders::{competition_arg_optional, problem_arg_optional};
-    use crate::config::SETTINGS_FILE_DEFAULT_CONTENTS;
+    use crate::problem::test_support::{cwd_lock, with_test_project, CurrentDirGuard};
     use crate::problem::PROBLEM_MAPPINGS_FILE;
-
-    static CWD_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-
-    fn cwd_lock() -> &'static Mutex<()> {
-        CWD_LOCK.get_or_init(|| Mutex::new(()))
-    }
-
-    struct CurrentDirGuard {
-        previous: PathBuf,
-    }
-
-    impl CurrentDirGuard {
-        fn enter(path: &Path) -> Self {
-            let previous = env::current_dir().expect("current dir should be readable");
-            env::set_current_dir(path).expect("current dir should be changeable");
-            Self { previous }
-        }
-    }
-
-    impl Drop for CurrentDirGuard {
-        fn drop(&mut self) {
-            env::set_current_dir(&self.previous).expect("current dir should be restorable");
-        }
-    }
-
-    fn with_test_project(test: impl FnOnce(&Path)) {
-        let _guard = cwd_lock().lock().expect("cwd lock should not be poisoned");
-        let tempdir = TempDir::new().expect("tempdir should be created");
-        let project_root = tempdir.path();
-        let problems_dir = project_root.join("problems");
-
-        fs::write(
-            project_root.join(crate::config::SETTINGS_FILE_NAME),
-            SETTINGS_FILE_DEFAULT_CONTENTS,
-        )
-        .expect("settings file should be written");
-        fs::create_dir_all(&problems_dir).expect("problems dir should be created");
-
-        let _cwd = CurrentDirGuard::enter(project_root);
-        test(&problems_dir);
-    }
 
     #[test]
     fn problem_names_are_prefix_filtered() {

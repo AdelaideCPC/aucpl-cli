@@ -1,9 +1,9 @@
 use std::fs;
 
 use anyhow::{bail, Context, Result};
-use clap::{value_parser, Arg, ArgAction, ArgMatches, Command, ValueHint};
+use clap::{Arg, ArgAction, ArgMatches, Command, ValueHint};
 
-use crate::cli::arg_builders::problem_option_arg_optional;
+use crate::cli::arg_builders::{category_option_arg_required, problem_option_arg_optional};
 use crate::config::get_settings;
 use crate::problem::fuzz;
 use crate::problem::run::{RunnableCategory, RunnableFile};
@@ -39,13 +39,7 @@ pub fn cli() -> Command {
             Command::new("create")
                 .about("Create a new problem and generate necessary files")
                 .arg_required_else_help(true)
-                .arg(
-                    Arg::new("difficulty")
-                        .action(ArgAction::Set)
-                        .help("Difficulty of the problem. For an unrated problem, put 0")
-                        .required(true)
-                        .value_parser(value_parser!(u16)),
-                )
+                .arg(category_option_arg_required())
                 .arg(
                     Arg::new("name")
                         .help("Problem name (this is not the problem title)")
@@ -98,17 +92,8 @@ pub fn cli() -> Command {
         )
         .subcommand(
             Command::new("reclassify")
-                .about("Reclassify (rerate) a problem's difficulty")
-                .args([
-                    Arg::new("difficulty")
-                        .short('d')
-                        .long("difficulty")
-                        .help("New difficulty of the problem. For an unrated problem, put 0")
-                        .action(ArgAction::Set)
-                        .value_parser(value_parser!(u16))
-                        .required(true),
-                    problem_option_arg_optional(),
-                ]),
+                .about("Move a problem to a different category")
+                .args([category_option_arg_required(), problem_option_arg_optional()]),
         )
         .subcommand(
             Command::new("solve")
@@ -205,11 +190,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 .try_get_one::<String>("name")?
                 .context("Problem name is required")?;
 
-            let difficulty = cmd
-                .try_get_one::<u16>("difficulty")?
-                .context("Problem difficulty is required")?;
+            let category = cmd
+                .try_get_one::<String>("category")?
+                .context("Problem category is required")?;
 
-            create::create(&problems_dir, problem_name, *difficulty)?;
+            create::create(&problems_dir, problem_name, category)?;
         }
         Some(("fuzz", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {
@@ -281,11 +266,11 @@ pub fn exec(args: &ArgMatches) -> Result<()> {
                 None => &get_problem_from_cwd(&problems_dir)?,
             };
 
-            let difficulty = cmd
-                .try_get_one::<u16>("difficulty")?
-                .context("Difficulty is required")?;
+            let category = cmd
+                .try_get_one::<String>("category")?
+                .context("Category is required")?;
 
-            reclassify::reclassify(&problems_dir, problem_name, *difficulty)?;
+            reclassify::reclassify(&problems_dir, problem_name, category)?;
         }
         Some(("solve", cmd)) => {
             let problem_name = match cmd.try_get_one::<String>("problem")? {

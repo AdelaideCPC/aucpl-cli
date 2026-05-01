@@ -34,13 +34,13 @@ cargo build --release
 
 ## How it works
 
-Problems are stored in a `problems` folder. This can be changed in the `settings.toml` file. Within this folder, there is a `new` and `archive` folder. The `new` folder is for problems that are not yet put into a competition. The `archive` folder is for problems that have already been put into a competition. Within these folders, there are folders denoting the difficulty of the problems starts from `0800` and goes in increments of 200. Unrated problems are stored in the `unrated` folder.
+Problems are stored in a `problems` folder. This can be changed in the `settings.toml` file. Within this folder, there is a `new` and `archive` folder. The `new` folder is for problems that are not yet put into a competition. The `archive` folder is for problems that have already been put into a competition. Within these folders, there are category folders such as `dp`, `graphs`, `easy`, `0800`, or `unrated`.
 
-Within each difficulty folder, there are the individual problems. Each of these folders will contain a `problem.md` which is the problem statement. There will be a `tests` folder for test cases and a `solutions` folder for reference solutions.
+Within each category folder, there are the individual problems. Each of these folders will contain a `problem.md` which is the problem statement. There will be a `tests` folder for test cases and a `solutions` folder for reference solutions.
 
 If a problem folder contains a `checker.py` next to `problem.md`, `aucpl problem test` will use it as a custom checker. The file must define `check(process_output, judge_output, **kwargs)` and return a boolean. The `judge_input` value is provided in `kwargs`.
 
-Lastly, there is a `problem-mappings.json` file that maps the problem names to its stored location. This is so that in the CLI, you do not have to specify things like the rating or whether it's a new or archived problem. You can also use `aucpl sync` to generate or update the mappings.
+Lastly, there is a `problem-mappings.json` file that maps the problem names to their stored location. This is so that in the CLI, you do not have to specify a problem's category or whether it's a new or archived problem. You can also use `aucpl sync` to generate or update the mappings.
 
 The general structure of `problems` looks like this:
 
@@ -48,7 +48,7 @@ The general structure of `problems` looks like this:
 problems/
     archive/
     new/
-        0800/
+        dp/
             problem-foo/
                 problem.md
                 checker.py
@@ -60,9 +60,9 @@ problems/
                     a.out
                     b.in
                     b.out
-        1000/
-        1200/
-        unrated/
+        graphs/
+        easy/
+        0800/
     problem-mappings.json
 ```
 
@@ -77,7 +77,7 @@ Here is a list of some of the commands.
 
 Problems
 
-- `aucpl problem create`: Create a new problem and generate necessary files
+- `aucpl problem create`: Create a new problem and generate necessary files (for example, `aucpl problem create --category easy two-sum`)
 - `aucpl problem solve`: Automatically generate output test cases for a given problem
 - `aucpl problem test`: Automatically run all tests for a given problem (uses `checker.py` if present, otherwise exact output match)
 - `aucpl problem check`: Ensure test cases and files are not missing

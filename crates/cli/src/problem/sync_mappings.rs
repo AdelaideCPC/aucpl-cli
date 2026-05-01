@@ -36,8 +36,8 @@ pub fn sync_mappings(problems_dir: &Path) -> Result<()> {
         fs::exists(&platform_path).unwrap_or(false)
     });
 
-    // Each problem would be in `./<status>/<difficulty>/<problem-name>`,
-    // i.e. a depth of 3
+    // Each problem lives at `./<status>/<category>/<problem-name>`,
+    // i.e. a depth of 3 from the problems directory.
     for entry in WalkDir::new(problems_dir)
         .min_depth(3)
         .max_depth(3)
@@ -131,4 +131,34 @@ pub fn get_all_problem_names(problems_dir: &Path) -> Result<Vec<String>> {
     let mappings: HashMap<String, String> = from_reader(&mappings_file)?;
 
     Ok(mappings.keys().cloned().collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{get_problem, sync_mappings};
+    use crate::problem::test_support::{create_problem_dir, with_test_project};
+
+    #[test]
+    fn discovers_problems_at_status_category_problem_depth() {
+        with_test_project(|problems_dir| {
+            create_problem_dir(problems_dir, "new", "regional_2026", "alpha");
+            create_problem_dir(problems_dir, "new", "1000", "beta");
+            create_problem_dir(problems_dir, "archive", "graphs", "gamma");
+
+            sync_mappings(problems_dir).expect("mappings should sync");
+
+            assert_eq!(
+                get_problem(problems_dir, "alpha").expect("alpha should be mapped"),
+                "problems/new/regional_2026/alpha"
+            );
+            assert_eq!(
+                get_problem(problems_dir, "beta").expect("beta should be mapped"),
+                "problems/new/1000/beta"
+            );
+            assert_eq!(
+                get_problem(problems_dir, "gamma").expect("gamma should be mapped"),
+                "problems/archive/graphs/gamma"
+            );
+        });
+    }
 }
