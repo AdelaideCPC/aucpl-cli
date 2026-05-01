@@ -4,7 +4,7 @@ members = ["crates/*"]
 default-members = ["crates/cli"]
 
 [workspace.package]
-version = "0.2.2"
+version = "0.3.0"
 description = "A helpful tool for AUCPL problem setters"
 edition = "2021"
 authors = ["Adelaide Competitive Programming Club"]
@@ -24,7 +24,7 @@ regex = "1.11.1"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
 strsim = "0.11"
-subprocess = "0.2.9"
+subprocess = "1.1.0"
 tempfile = "3.14"
 thiserror = "2.0"
 uuid = { version = "1.17.0", features = ["v4"] }
