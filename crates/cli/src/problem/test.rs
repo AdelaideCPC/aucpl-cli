@@ -1,8 +1,10 @@
+use std::env;
+use std::fs;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{bail, Context, Result};
 
@@ -17,10 +19,18 @@ import importlib.util
 import sys
 
 checker_path = sys.argv[1]
-process_output = sys.argv[2]
-judge_output = sys.argv[3]
+process_output_path = sys.argv[2]
+judge_output_path = sys.argv[3]
+judge_input_path = sys.argv[4]
 
-judge_input = sys.stdin.read()
+with open(process_output_path, "rb") as f:
+    process_output = f.read().decode("utf-8")
+
+with open(judge_output_path, "rb") as f:
+    judge_output = f.read().decode("utf-8")
+
+with open(judge_input_path, "rb") as f:
+    judge_input = f.read().decode("utf-8")
 
 spec = importlib.util.spec_from_file_location("aucpl_checker", checker_path)
 if spec is None or spec.loader is None:
@@ -34,10 +44,45 @@ if not hasattr(module, "check"):
     print("checker.py must define a `check` function", file=sys.stderr)
     sys.exit(2)
 
-result = module.check(process_output, judge_output, judge_input=judge_input)
+result = module.check(
+    process_output.encode("utf-8"),
+    judge_output.encode("utf-8"),
+    judge_input=judge_input.encode("utf-8")
+)
 
 print("true" if bool(result) else "false")
 "#;
+
+struct CheckerTempFiles {
+    process_output: PathBuf,
+    judge_output: PathBuf,
+}
+
+impl CheckerTempFiles {
+    fn new(process_output: &str, judge_output: &[u8]) -> Result<Self> {
+        let temp_dir = env::temp_dir();
+        let nonce = format!("{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos());
+        let process_output_path = temp_dir.join(format!("aucpl-process-output-{nonce}.txt"));
+        let judge_output_path = temp_dir.join(format!("aucpl-judge-output-{nonce}.txt"));
+
+        fs::write(&process_output_path, process_output)
+            .context("Failed to write process output temp file")?;
+        fs::write(&judge_output_path, judge_output)
+            .context("Failed to write judge output temp file")?;
+
+        Ok(Self {
+            process_output: process_output_path,
+            judge_output: judge_output_path,
+        })
+    }
+}
+
+impl Drop for CheckerTempFiles {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.process_output);
+        let _ = fs::remove_file(&self.judge_output);
+    }
+}
 
 fn run_custom_checker(
     settings: &Settings,
@@ -46,8 +91,8 @@ fn run_custom_checker(
     judge_output: &[u8],
     input_file_path: &PathBuf,
 ) -> Result<bool> {
-    let judge_output = String::from_utf8_lossy(judge_output).into_owned();
     let python_cmd = get_python_executable(settings);
+    let temp_files = CheckerTempFiles::new(process_output, judge_output)?;
 
     let checker_run = RunCommand::from_command(
         PathBuf::new(),
@@ -57,13 +102,14 @@ fn run_custom_checker(
             "-c".to_string(),
             PYTHON_CHECKER_SCRIPT.to_string(),
             "@script_file".to_string(),
-            process_output.to_string(),
-            judge_output,
+            temp_files.process_output.to_string_lossy().into_owned(),
+            temp_files.judge_output.to_string_lossy().into_owned(),
+            input_file_path.to_string_lossy().into_owned(),
         ],
     )
     .context("Failed to prepare checker command")?;
     let checker_result = checker_run
-        .get_result(Some(input_file_path))
+        .get_result(None)
         .context("Failed to run checker.py")?
         .output;
 
