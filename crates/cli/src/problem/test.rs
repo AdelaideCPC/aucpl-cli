@@ -24,13 +24,13 @@ judge_output_path = sys.argv[3]
 judge_input_path = sys.argv[4]
 
 with open(process_output_path, "rb") as f:
-    process_output = f.read().decode("utf-8")
+    process_output = f.read()
 
 with open(judge_output_path, "rb") as f:
-    judge_output = f.read().decode("utf-8")
+    judge_output = f.read()
 
 with open(judge_input_path, "rb") as f:
-    judge_input = f.read().decode("utf-8")
+    judge_input = f.read()
 
 spec = importlib.util.spec_from_file_location("aucpl_checker", checker_path)
 if spec is None or spec.loader is None:
@@ -45,9 +45,9 @@ if not hasattr(module, "check"):
     sys.exit(2)
 
 result = module.check(
-    process_output.encode("utf-8"),
-    judge_output.encode("utf-8"),
-    judge_input=judge_input.encode("utf-8")
+    process_output,
+    judge_output,
+    judge_input=judge_input
 )
 
 print("true" if bool(result) else "false")
@@ -61,7 +61,11 @@ struct CheckerTempFiles {
 impl CheckerTempFiles {
     fn new(process_output: &str, judge_output: &[u8]) -> Result<Self> {
         let temp_dir = env::temp_dir();
-        let nonce = format!("{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos());
+        let nonce = format!(
+            "{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+        );
         let process_output_path = temp_dir.join(format!("aucpl-process-output-{nonce}.txt"));
         let judge_output_path = temp_dir.join(format!("aucpl-judge-output-{nonce}.txt"));
 
@@ -89,7 +93,7 @@ fn run_custom_checker(
     checker_path: &Path,
     process_output: &str,
     judge_output: &[u8],
-    input_file_path: &PathBuf,
+    input_file_path: &Path,
 ) -> Result<bool> {
     let python_cmd = get_python_executable(settings);
     let temp_files = CheckerTempFiles::new(process_output, judge_output)?;
